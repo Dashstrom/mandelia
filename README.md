@@ -3,6 +3,7 @@
 Ancien projet fait en Cython/Python avec Tkinter pour afficher la fractale de Mandelbrot.
 
 # Usage
+Compiler le code cython avec `compile.bat` ou directment avec `setup.py`.
 Lancer l'application avec `main.py`.
 Pour les fonctionnalitées principales vous pouvez selectionner une zone pour zoomer
 et double clicker pour faire un gif plongeant
