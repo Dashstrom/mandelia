@@ -183,7 +183,7 @@ class SettingsMenu(BaseMenu):
             return
         path = filedialog.asksaveasfilename(title="Enregistrer la capture",
                                             filetypes=[('All Files', '.*')],
-                                            initialfile="Sans titre.png")
+                                            initialfile=timename() + ".png")
         if not path:
             return
         try:
@@ -440,7 +440,7 @@ class Workspace(Canvas):
                          "Attention, le rendu d'un gif peu être lent.\n"
                          "Voulez-vous continuez ?"):
             images = self.fractale.drop(event.x, event.y)
-            name = hex(int(time()))[2:].upper() + ".gif"
+            name = timename() + ".gif"
             while True:
                 path = filedialog.asksaveasfilename(
                     title="Enregistrer le gif",
