@@ -1,16 +1,27 @@
 # Mandelbrot
 
-Ancien projet fait en Cython/Python avec Tkinter pour afficher la fractale de Mandelbrot.
+Ancien projet fait en Cython/Python avec Tkinter pour afficher la fractale de Mandelbrot.  
+C'est une application bugée et faite en code spaghetti !  
 
-# Usage
+## Usage
 Compiler le code cython avec `compile.bat` ou directment avec `setup.py`.
 Lancer l'application avec `main.py`.
-Pour les fonctionnalitées principales vous pouvez selectionner une zone pour zoomer
-et double clicker pour faire un gif plongeant
+Pour les fonctionnalités principales vous pouvez sélectionner une zone pour zoomer
+et double clicker pour faire un gif plongeant.  
+Les fonctionnalités suivantes sont instables:
+- Historique
+- Redimentionnemant
 
-# Exemmple
+Vous pouvez toujours redimensionner mais il est conseillé de reset à chaque redimentionnement.
 
-# About
+##  Exemple
+Screenshot  
+![alt text](https://github.com/Dashstrom/Mandelbrot/blob/main/example/2.png?raw=true "image fractale")  
+  
+Gif  
+![alt text](https://github.com/Dashstrom/Mandelbrot/blob/main/example/1.gif?raw=true "gif anime plongeant")  
+
+##  About
 En mathématiques, l'ensemble de Mandelbrot est une fractale définie
 comme l'ensemble des points c du plan complexe pour lesquels la suite
 de nombres complexes définie par récurrence par :
