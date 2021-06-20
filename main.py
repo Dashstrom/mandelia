@@ -1,4 +1,10 @@
-from mandelbrot import App
+from mandelbrot.controler.controller import Controller
+import sys
 
 if __name__ == "__main__":
-    App()
+    if len(sys.argv) == 1:
+        Controller()
+    elif len(sys.argv) == 2:
+        Controller(path=sys.argv[1])
+    else:
+        raise ValueError("Take only one optional argument")

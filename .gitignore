@@ -1,5 +1,8 @@
 *.c
+*.cpp
 *.pyd
 *.html
 **/build/
+**/dist/
+**/.mypy_cache/
 **/__pycache__/
