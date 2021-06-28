@@ -14,7 +14,7 @@ ext = cythonize([
         ["mandelbrot/model/*.pyx"],
         libraries=libraries,
         extra_compile_args=["/openmp"],
-        extra_link_args=['/openmp'],
+        # extra_link_args=['/openmp'],
         include_dirs=include_dirs,
         library_dirs=library_dirs
     )],

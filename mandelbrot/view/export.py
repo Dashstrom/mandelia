@@ -19,20 +19,20 @@ class Export(Toplevel):
             print(err)
         self.data: Dict[str, Any] = {}
         self.format = LabelFrame(self, text="Format", labelanchor=NW)
-        vals = ['PNG', 'GIF', 'MP4']
-        self.format_var = StringVar(self, vals[0])
+        values = ['PNG', 'GIF', 'MP4']
+        self.format_var = StringVar(self, values[0])
         self.formats = {}
-        for val in vals:
+        for val in values:
             self.formats[val] = Radiobutton(self.format, text=val, width=9,
                                             indicatoron=FALSE, value=val,
                                             variable=self.format_var)
         self.details = LabelFrame(self, text="Détails", labelanchor=NW)
-        self.fps = AdjustableInput(self.details, "FPS", 3, 15, 60)
-        self.width = AdjustableInput(self.details, "Largeur", 32, 1920, 7680)
-        self.height = AdjustableInput(self.details, "Hauteur", 32, 1080, 7680)
+        self.fps = AdjustableInput(self.details, "FPS", 5, 24, 60)
+        self.width = AdjustableInput(self.details, "Largeur", 128, 1920, 3840)
+        self.height = AdjustableInput(self.details, "Hauteur", 128, 1080, 3840)
         self.compression = AdjustableInput(self.details, "Compression",
                                            10, 95, 100)
-        self.speed = AdjustableInput(self.details, "Vitesse", 2, 20, 100)
+        self.speed = AdjustableInput(self.details, "Vitesse", 5, 10, 50)
         self.button = Button(self, text="Terminer", command=self.terminate)
 
         self.format_var.trace("w", lambda *_: self.disable_useless())

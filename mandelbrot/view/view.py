@@ -55,12 +55,10 @@ class Iteration(LabelFrame):
         self.max = AdjustableInput(self, "Max", 100, 2_000, 10_000)
         self.sum = Output(self, "Total", 0)
         self.per_pixel = Output(self, "Par pixel", 0)
-        self.per_second = Output(self, "Par seconde", 0)
 
         self.max.pack(anchor=W, fill=X)
         self.sum.pack(anchor=W, fill=X)
         self.per_pixel.pack(anchor=W, fill=X)
-        self.per_second.pack(anchor=W, fill=X)
 
 
 class Positioning(LabelFrame):
@@ -97,7 +95,6 @@ class View(Tk):
         except Exception as err:
             print(err)
 
-        self.progressbar = Progressbar(self, orient=HORIZONTAL, value=100)
         self.canvas = Canvas(self, width=600, height=600, bd=0,
                              highlightthickness=0, bg="black")
         self.aside = Frame(self)
@@ -108,7 +105,6 @@ class View(Tk):
         self.positioning = Positioning(self.aside)
 
         self.aside.pack(side=LEFT, fill=Y)
-        self.progressbar.pack(side=BOTTOM, fill=X)
         self.canvas.pack(fill=BOTH, expand=TRUE)
         self.action.pack(fill=X, padx=10)
         self.file.pack(fill=X, pady=5, padx=10)

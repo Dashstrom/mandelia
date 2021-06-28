@@ -1,13 +1,13 @@
 # distutils: language=c++
 
 import numpy as np
-import base64
+import struct as s
+
 from PIL import Image
-from time import time
 
 cimport numpy as np
 cimport cython
-from libc.string cimport memcpy
+
 from cython.parallel import prange
 
 DTYPE = np.uint32
@@ -18,189 +18,176 @@ ctypedef np.uint8_t COLORTYPE_t
 
 CHAR_SIZE = sizeof(unsigned char)
 
-DEF SAVE_SIZE = 35
 DEF PIXEL_DEFAULT = 0.02
-DEF MIN_PIXEL_SIZE = PIXEL_DEFAULT * 4
+DEF MIN_PIXEL_SIZE = PIXEL_DEFAULT * 16
+DEF BASE_SAVE_SIZE = 48
+DEF JULIA_SIZE = BASE_SAVE_SIZE + 16
+DEF MANDELBROT_SIZE = BASE_SAVE_SIZE
 
-@cython.boundscheck(False)  # turn off bounds-checking
-@cython.wraparound(False)  # turn off negative index wrapping
-cdef np_mandelbrot(short width, short height, double pixel, double real,
-                   double imaginary, unsigned int iteration_max):
+cpdef check_bytes_size(bytes_, int size):
+    """Check the count of bytes and type."""
+    if not isinstance(bytes_, bytes):
+        raise TypeError(f"bytes_ must be bytes type, got {type(bytes)}")
+    elif len(bytes_) != size:
+        raise ValueError(
+            f"bytes_ must contain {size} bytes , got {len(bytes_)}")
+
+cdef to_bytes(obj):
+    """Convert numbers into bytes."""
+    if isinstance(obj, int):
+        return s.pack(">I", int(obj))
+    elif isinstance(obj, float):
+        return s.pack("d", float(obj))
+    else:
+        raise TypeError(f"{type(obj)} is not valid object for bytes")
+
+cdef from_bytes(bytes_):
+    """
+    Convert bytes into numbers based on bytes length.
+    
+    8 for float and 4 for int.
+    """
+    if not isinstance(bytes_, bytes):
+        raise TypeError("incorrect type")
+    if len(bytes_) == 4:
+        return s.unpack(">I", bytes_)[0]
+    elif len(bytes_) == 8:
+        return s.unpack("d", bytes_)[0]
+    else:
+        raise TypeError(
+            f"bytes have invalid length is not valid object for bytes")
+
+cdef unsigned int iterate(double z_r, double z_i, double c_r, double c_i,
+                          unsigned int iterations) nogil except +:
+    """
+    Iterate on a complex numbers.
+    formula: Zn+1 = Zn ** 2 + C
+    """
     cdef:
-        double c_r, c_i, z_r, z_i, tmp, x_start, y_start, ld_y, ld_x
-        short y, x
+        double tmp
         unsigned int i
-        np.ndarray[DTYPE_t, ndim=2] content = np.zeros((width, height),
-                                                       dtype=DTYPE)
 
-    x_start = real - width / 2 * pixel
-    y_start = imaginary - height / 2 * pixel
-    for x in prange(width, schedule='guided', nogil=True):
-        ld_x = x
-        c_r = x_start + ld_x * pixel
-        for y in range(height):
-            ld_y = y
-            c_i = y_start + ld_y * pixel
-            z_r = 0
-            z_i = 0
-            for i in range(iteration_max):
-                tmp = z_r
-                z_r = z_r * z_r - z_i * z_i + c_r
-                z_i = 2 * z_i * tmp + c_i
-                if z_r * z_r + z_i * z_i > 4:
-                    break
-            content[x, y] = i + 1
-    return content
+    for i in range(iterations):
+        tmp = z_r
+        z_r = z_r * z_r - z_i * z_i + c_r
+        z_i = 2 * z_i * tmp + c_i
+        if z_r * z_r + z_i * z_i > 4:
+            break
+    return 0 if i == iterations - 1 else i + 1
 
-@cython.boundscheck(False)  # turn off bounds-checking
-@cython.wraparound(False)  # turn off negative index wrapping
-cdef np_julia(short width, short height, double pixel, double c_r,
-              double c_i, double real, double imaginary,
-              unsigned int iteration_max):
-    cdef:
-        double z_r, z_i, pre_z_r, tmp, x_start, y_start, ld_y, ld_x
-        short y, x
-        unsigned int i
-        np.ndarray[DTYPE_t, ndim=2] content = np.zeros((width, height),
-                                                       dtype=DTYPE)
+cdef class ModuloColoration:
+    cdef public unsigned char r, g, b
 
-    x_start = real - width / 2 * pixel
-    y_start = imaginary - height / 2 * pixel
-    for x in prange(width, schedule='guided', nogil=True):
-        ld_x = x
-        pre_z_r = x_start + ld_x * pixel
-        for y in range(height):
-            ld_y = y
-            z_r = pre_z_r
-            z_i = y_start + ld_y * pixel
-            for i in range(iteration_max):
-                tmp = z_r
-                z_r = z_r * z_r - z_i * z_i + c_r
-                z_i = 2 * z_i * tmp + c_i
-                if z_r * z_r + z_i * z_i > 10:
-                    break
-            content[x, y] = i + 1
-    return content
-
-
-@cython.boundscheck(False)  # turn off bounds-checking
-@cython.wraparound(False)  # turn off negative index wrapping
-cdef np_modulo_256_color(np.ndarray[DTYPE_t, ndim=2] content,
-                         unsigned int iteration_max, unsigned char r,
-                         unsigned char g, unsigned char b):
-    cdef:
-        short width, height, x, y
-        unsigned int i
-        np.ndarray[COLORTYPE_t, ndim=3] image
-
-    width = content.shape[0]
-    height = content.shape[1]
-    image = np.zeros((height, width, 3), dtype=COLORTYPE)
-    for x in prange(width, schedule='guided', nogil=True):
-        for y in range(height):
-            i = content[x, y]
-            if i < iteration_max:
-                image[y, x, 0] = r * i
-                image[y, x, 1] = g * i
-                image[y, x, 2] = b * i
-    return image
-
-cdef class Fractale:
-    cdef:
-        unsigned char r, g, b
-        double real, imaginary, pixel
-        double duration
-        short width, height
-        unsigned int iteration_max
-        content, need_update
-
-    def __init__(self, real=0, imaginary=0, pixel=PIXEL_DEFAULT,
-                 iterations=2000, r=3, g=1, b=10, width=128, height=128):
-        if width <= 0:
-            raise ValueError("width must be positive")
-        if height <= 0:
-            raise ValueError("height must be positive")
-        self.content = np.zeros((0, 0), dtype=DTYPE)
-        self.real = real
-        self.imaginary = imaginary
-        self.pixel = pixel
-        self.iteration_max = iterations
-        self.width = width
-        self.height = height
-        self.duration = 0
+    def __init__(self, r, g, b):
         self.r = r
         self.g = g
         self.b = b
+
+    cpdef to_bytes(self):
+        """Convert ModuloColor into bytes."""
+        return to_bytes(self.r) + to_bytes(self.g) + to_bytes(self.b)
+
+    cpdef from_bytes(self, bytes bytes_):
+        """Convert bytes into ModuloColor."""
+        check_bytes_size(bytes_, 12)
+        self.r = from_bytes(bytes_[0:4])
+        self.g = from_bytes(bytes_[4:8])
+        self.b = from_bytes(bytes_[8:12])
+
+    @cython.boundscheck(False)  # turn off bounds-checking
+    @cython.wraparound(False)  # turn off negative index wrapping
+    cpdef np.ndarray[COLORTYPE_t, ndim=3] colorize(
+            self, np.ndarray[DTYPE_t, ndim=2] np_fractale):
+        """Color a two-dimensional array."""
+        cdef:
+            short width, height, x, y
+            unsigned char r = self.r, g = self.g, b = self.b
+            unsigned int i
+            np.ndarray[COLORTYPE_t, ndim=3] image
+
+        width = np_fractale.shape[0]
+        height = np_fractale.shape[1]
+        image = np.zeros((height, width, 3), dtype=COLORTYPE)
+        for x in prange(width, schedule='guided', nogil=True):
+            for y in range(height):
+                i = np_fractale[x, y]
+                if i != 0:
+                    image[y, x, 0] = r * i
+                    image[y, x, 1] = g * i
+                    image[y, x, 2] = b * i
+        return image
+
+cdef class Fractale:
+    cdef:
+        readonly double real, imaginary, pixel_size
+        readonly short width, height
+        readonly unsigned int iterations
+        readonly need_update
+        content
+        ModuloColoration color
+
+    def __init__(self, ModuloColoration color, real=0, imaginary=0,
+                 iterations=1_000,
+                 width=48, height=48, pixel_size=PIXEL_DEFAULT):
+        self.content = np.zeros((width, height), dtype=DTYPE)
+        self.color = color
+        self.real = real
+        self.imaginary = imaginary
+        self.iterations = iterations
+        self.width = width
+        self.height = height
+        self.pixel_size = pixel_size
         self.need_update = True
 
     def __str__(self):
         return self.__repr__()
 
     def __repr__(self):
-        return (f"<{self.__class__.__name__} {self.width}x{self.height} "
-                f"zoom={self.get_zoom()} {self.real}{self.imaginary:+}i>")
-
-    cpdef get_real(self):
-        return self.real
+        return (f"<{self.__class__.__name__} "
+                f"pixel_size={self.pixel_size} "
+                f"{self.real}{self.imaginary:+}i>")
 
     cpdef set_real(self, double real):
+        """Set real part of Z."""
         self.real = real
         self.need_update = True
 
-    cpdef get_imaginary(self):
-        return self.imaginary
-
     cpdef set_imaginary(self, double imaginary):
+        """Set imaginary part of Z."""
         self.imaginary = imaginary
         self.need_update = True
 
-    cpdef get_zoom(self):
-        return int(1 / self.pixel) if self.pixel != 0 else 10 ** 30
+    cpdef set_iterations(self, unsigned int iterations):
+        """Set max iterations."""
+        self.iterations = iterations
 
-    cpdef get_iteration_max(self):
-        return self.iteration_max
-
-    cpdef get_red(self):
-        return self.r
-
-    cpdef get_green(self):
-        return self.g
-
-    cpdef get_blue(self):
-        return self.b
-
-    cpdef rgb(self):
-        return self.r, self.g, self.b
-
-    cpdef set_color(self, unsigned char r, unsigned char g, unsigned char b):
-        self.r = r
-        self.b = b
-        self.g = g
-
-    cpdef set_iteration_max(self, unsigned int iteration_max):
-        self.iteration_max = iteration_max
+    cpdef resize(self, short width, short height):
+        """Resize width and height, and adjust the zoom if necessary."""
+        cdef double multiplier
+        multiplier = width / self.width
+        self.width = width
+        self.height = height
+        self.middle_zoom(multiplier)
         self.need_update = True
 
     cpdef iterations_sum(self):
-        return np.sum(self.content)
+        """Total number of iterations."""
+        cdef unsigned long long sum_
+        sum_ = np.sum(self.content)
+        sum_ += np.count_nonzero(self.content == 0) * self.iterations
+        return sum_
 
     cpdef iterations_per_pixel(self):
-        cdef unsigned int pixels = self.width * self.height
-        if pixels != 0:
-            return self.iterations_sum() / pixels
-        else:
-            return 0
+        """Average iteration per pixel."""
+        cdef unsigned int pixels
+        pixels = self.width * self.height
+        return self.iterations_sum() / pixels if pixels != 0 else 0
 
-    cpdef iterations_per_second(self):
-        if self.duration != 0:
-            return self.iterations_sum() / self.duration
-        else:
-            return 0
-
-    cdef check_min_size(self):
-        cdef double multiplier = self.pixel / MIN_PIXEL_SIZE
-        if self.pixel > MIN_PIXEL_SIZE:
-            self.pixel = MIN_PIXEL_SIZE
+    cdef _check_min_size(self):
+        """Increases pixel size if it is smaller than MIN_PIXEL_SIZE."""
+        cdef double multiplier = self.pixel_size / MIN_PIXEL_SIZE
+        if self.pixel_size > MIN_PIXEL_SIZE:
+            self.pixel_size = MIN_PIXEL_SIZE
             self.real = self.real / multiplier
             self.imaginary = self.imaginary / multiplier
             if -0.001 < self.real < 0.001:
@@ -209,211 +196,201 @@ cdef class Fractale:
                 self.imaginary = 0
 
     cpdef image(self):
+        """
+        Compute image if there is update otherwise just do the coloring.
+        """
+        cdef np.ndarray[COLORTYPE_t, ndim=3] colored
         if self.need_update:
-            self.compute()
-        colored = np_modulo_256_color(
-            self.content,
-            self.iteration_max,
-            self.r,
-            self.g,
-            self.b
-        )
+            self._compute()
+            self.need_update = False
+        colored = self.color.colorize(self.content)
         return Image.fromarray(colored, 'RGB')
 
-    cpdef resize(self, short width, short height):
-        cdef double multiplier
-        multiplier = width / self.width
-        self.width = width
-        self.height = height
-        self.middle_zoom(multiplier)
-        self.need_update = True
-
-    cpdef screenshot(self, short width, short height):
+    cpdef image_at_size(self, short width, short height):
+        """
+        Get image with specific size.
+        """
         cdef:
-            content_copy
+            np.ndarray[DTYPE_t, ndim=2] content_copy
             short x
             short w_copy = self.width
             short h_copy = self.height
             double real_copy = self.real
             double imaginary_copy = self.imaginary
-            double pixel_copy = self.pixel
-        if self.width != width or self.height != height:
+            double pixel_copy = self.pixel_size
+
+        if w_copy != width or h_copy != height:
             content_copy = self.content.copy()
             self.resize(width, height)
             img = self.image()
             self.real = real_copy
             self.imaginary = imaginary_copy
-            self.pixel = pixel_copy
+            self.pixel_size = pixel_copy
             self.content = content_copy
             self.width = w_copy
             self.height = h_copy
-        img = self.image()
+        else:
+            img = self.image()
         return img
 
     cpdef top(self):
-        self.pixel = PIXEL_DEFAULT
-        self.need_update = True
+        """Set pixel at default size."""
+        if self.pixel_size != PIXEL_DEFAULT:
+            self.pixel_size = PIXEL_DEFAULT
+            self.need_update = True
 
     cpdef middle_zoom(self, double multiplier):
+        """Zoom at the middle."""
         self.zoom(self.width // 2, self.height // 2, multiplier)
 
     cpdef zoom(self, short x, short y, double multiplier):
-        cdef double pixel = self.pixel, real = self.real, imaginary = self.imaginary
+        """Zoom at a position in the image."""
+        cdef double pixel = self.pixel_size, real = self.real, imaginary = self.imaginary
         self.real = (real * 1 / multiplier
                      + (real + x * pixel - self.width / 2 * pixel)
                      * (1 - 1 / multiplier))
         self.imaginary = (imaginary * 1 / multiplier
                           + (imaginary + y * pixel - self.height / 2 * pixel)
                           * (1 - 1 / multiplier))
-        self.pixel /= multiplier
-        self.check_min_size()
+        self.pixel_size /= multiplier
+        self._check_min_size()
         self.need_update = True
 
     cpdef reset(self):
+        """Reset position and pixel size."""
         self.real = 0
         self.imaginary = 0
-        self.pixel = PIXEL_DEFAULT
+        self.pixel_size = PIXEL_DEFAULT
         self.need_update = True
 
-    cdef compute(self):
+    cdef np.ndarray[DTYPE_t, ndim=2] _compute(self):
+        """Compute fractale."""
         raise NotImplementedError()
 
-    cpdef code(self):
-        """Return str in base 64 representative of the fractale."""
-        return str(base64.b64encode(self.data()))[2:-1]
-
-    cpdef from_code(self, code):
-        """Load data encoded in base 64 on the fractale."""
-        self.from_data(base64.b64decode(code))
-
-    cpdef data(self):
-        """Return bytes representative of the fractale."""
-        cdef:
-            unsigned char arr[SAVE_SIZE]
-        arr[:] = [0] * SAVE_SIZE
-        memcpy(arr, &self.real, 8 * CHAR_SIZE)
-        memcpy(arr + 8, &self.imaginary, 8 * CHAR_SIZE)
-        memcpy(arr + 16, &self.pixel, 8 * CHAR_SIZE)
-        memcpy(arr + 24, &self.iteration_max, 4 * CHAR_SIZE)
-        memcpy(arr + 28, &self.r, CHAR_SIZE)
-        memcpy(arr + 29, &self.g, CHAR_SIZE)
-        memcpy(arr + 30, &self.b, CHAR_SIZE)
-        memcpy(arr + 31, &self.width, 2 * CHAR_SIZE)
-        memcpy(arr + 33, &self.height, 2 * CHAR_SIZE)
-        return bytearray([arr[i] for i in range(SAVE_SIZE)])
-
-    cpdef from_data(self, bytes_):
-        """Load data on the fractale."""
-        cdef:
-            unsigned char arr[SAVE_SIZE]
-            short width = self.width, height = self.height
-        if not isinstance(bytes_, (bytes, bytearray)):
-            raise TypeError(
-                f"Invalid type, attempt bytes but receive {type(bytes_)}")
-        elif len(bytes_) != SAVE_SIZE:
-            raise ValueError(f"bytes must contain {SAVE_SIZE} byte")
-        arr[:] = bytes_
-        memcpy(&self.real, arr, 8 * CHAR_SIZE)
-        memcpy(&self.imaginary, arr + 8, 8 * CHAR_SIZE)
-        memcpy(&self.pixel, arr + 16, 8 * CHAR_SIZE)
-        memcpy(&self.iteration_max, arr + 24, 4 * CHAR_SIZE)
-        memcpy(&self.r, arr + 28, CHAR_SIZE)
-        memcpy(&self.g, arr + 29, CHAR_SIZE)
-        memcpy(&self.b, arr + 30, CHAR_SIZE)
-        memcpy(&self.width, arr + 31, 2 * CHAR_SIZE)
-        memcpy(&self.height, arr + 33, 2 * CHAR_SIZE)
-        self.resize(width, height)
-
-    cpdef get_width(self):
-        return self.width
-
-    cpdef get_height(self):
-        return self.height
-
     cpdef real_at_x(self, short x):
-        cdef double start_r = self.real - (self.width * self.pixel) / 2
-        return (self.real - (self.width * self.pixel) / 2) + x * self.pixel
+        """Return real part of Z at x in image."""
+        cdef double start_r = self.real - (self.width * self.pixel_size) / 2
+        return start_r + x * self.pixel_size
 
     cpdef imaginary_at_y(self, short y):
-        cdef double start_i = self.imaginary - (self.height * self.pixel) / 2
-        return start_i + y * self.pixel
+        """Return imaginary part of Z at y in image."""
+        cdef double start_i = self.imaginary - (
+                self.height * self.pixel_size) / 2
+        return start_i + y * self.pixel_size
+
+    cpdef to_bytes(self):
+        """Return bytes representative of the fractal."""
+        return (to_bytes(self.real)
+                + to_bytes(self.imaginary)
+                + to_bytes(self.pixel_size)
+                + to_bytes(self.width)
+                + to_bytes(self.height)
+                + to_bytes(self.iterations)
+                + self.color.to_bytes())
+
+    cpdef from_bytes(self, bytes bytes_):
+        """Load data on the fractal."""
+        cdef short w = self.width, h = self.height
+        check_bytes_size(bytes_, 48)
+        self.real = from_bytes(bytes_[0:8])
+        self.imaginary = from_bytes(bytes_[8:16])
+        self.pixel_size = from_bytes(bytes_[16:24])
+        self.width = from_bytes(bytes_[24:28])
+        self.height = from_bytes(bytes_[28:32])
+        self.iterations = from_bytes(bytes_[32:36])
+        self.color.from_bytes(bytes_[36:48])
+        self.resize(w, h)
+        self.need_update = True
 
 cdef class Julia(Fractale):
     cdef:
-        double c_r, c_i
-    def __init__(self, *args, **kwargs):
-        self.c_r = 0
-        self.c_i = 0
-        self.imaginary = 0
-        self.real = 0
-        super().__init__(*args, **kwargs)
+        readonly double c_r, c_i
+    def __init__(self, color: ModuloColoration, c_r=0, c_i=0, real=0,
+                 imaginary=0, iterations=1_000, width=48, height=48,
+                 pixel_size=PIXEL_DEFAULT):
+        self.c_r = c_r
+        self.c_i = c_i
+        super().__init__(color, real, imaginary, iterations, width,
+                         height, pixel_size)
 
-    cpdef get_real(self) :
-        return self.real
-
-    cpdef get_imaginary(self):
-        return self.imaginary
-
-    cpdef set_real(self, double c_r):
+    cpdef set_c_r(self, double c_r):
+        """Set real part of C."""
         self.c_r = c_r
         self.need_update = True
 
-    cpdef set_imaginary(self, double c_i):
+    cpdef set_c_i(self, double c_i):
+        """Set imaginary part of C."""
         self.c_i = c_i
         self.need_update = True
 
-    cdef compute(self):
+    cpdef to_bytes(self):
+        """Return bytes representative of the fractal."""
+        return (super(Julia, self).to_bytes()
+                + to_bytes(self.c_r)
+                + to_bytes(self.c_i))
+
+    cpdef from_bytes(self, bytes bytes_):
+        """Load data on the fractal."""
+        morsel = bytes_[-16:]
+        bytes_ = bytes_[:-16]
+        check_bytes_size(morsel, 16)
+        super(Julia, self).from_bytes(bytes_)
+        self.c_r = from_bytes(morsel[:8])
+        self.c_i = from_bytes(morsel[8:])
+
+    @cython.boundscheck(False)  # turn off bounds-checking
+    @cython.wraparound(False)  # turn off negative index wrapping
+    cdef np.ndarray[DTYPE_t, ndim=2] _compute(self):
+        """Compute fractal."""
         cdef:
-            double start = time()
-        self.content = np_julia(self.width, self.height, self.pixel,
-                                self.c_r, self.c_i, self.real,
-                                self.imaginary, self.iteration_max)
-        self.duration = time() - start
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        return (f"<{self.__class__.__name__} {self.width}x{self.height} "
-                f"zoom={self.get_zoom()} {self.real}{self.imaginary:+}i "
-                f"c={self.c_r}{self.c_i:+}i>")
-
-    cpdef data(self):
-        """Return bytes representative of the fractale."""
-        cdef:
-            unsigned char arr[16]
-            bytearray data
-        arr[:] = [0] * 16
-        memcpy(arr, &self.c_r, 8 * CHAR_SIZE)
-        memcpy(arr + 8, &self.c_i, 8 * CHAR_SIZE)
-        data = super().data()
-        data.extend(arr)
-        return data
-
-    cpdef from_data(self, bytes_):
-        """Load data on the fractale."""
-        cdef:
-            unsigned char arr[16]
-        if not isinstance(bytes_, (bytes, bytearray)):
-            raise TypeError(
-                f"Invalid type, attempt bytes but receive {type(bytes_)}")
-        elif len(bytes_) != SAVE_SIZE:
-            raise ValueError(f"bytes must contain {SAVE_SIZE} byte")
-        arr[:] = bytes_[:16]
-        memcpy(&self.c_r, arr, 8 * CHAR_SIZE)
-        memcpy(&self.c_i, arr, 8 * CHAR_SIZE)
-        super().from_data(bytes_[16:])
-
+            double z_r, z_i, pre_z_r, tmp, x_start, y_start, ld_y, ld_x
+            double real = self.real
+            double imaginary = self.imaginary
+            double pixel_size = self.pixel_size
+            double c_r = self.c_r
+            double c_i = self.c_i
+            short width = self.width, height = self.height
+            short y, x
+            unsigned int i, iterations = self.iterations
+            np.ndarray[DTYPE_t, ndim=2] content = np.zeros((width, height),
+                                                           dtype=DTYPE)
+        x_start = real - width / 2 * pixel_size
+        y_start = imaginary - height / 2 * pixel_size
+        for x in prange(width, schedule='guided', nogil=True):
+            ld_x = x
+            pre_z_r = x_start + ld_x * pixel_size
+            for y in range(height):
+                ld_y = y
+                z_r = pre_z_r
+                z_i = y_start + ld_y * pixel_size
+                content[x, y] = iterate(z_r, z_i, c_r, c_i, iterations)
+        self.content = content
 
 cdef class Mandelbrot(Fractale):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    cdef compute(self):
+    @cython.boundscheck(False)  # turn off bounds-checking
+    @cython.wraparound(False)  # turn off negative index wrapping
+    cdef np.ndarray[DTYPE_t, ndim=2] _compute(self):
+        """Compute fractal."""
         cdef:
-            double start = time()
-        self.content = np_mandelbrot(self.width, self.height, self.pixel,
-                                     self.real, self.imaginary,
-                                     self.iteration_max)
-        self.duration = time() - start
-        print(f"{self.duration * 1000:.2f}ms")
+            double c_r, c_i, z_r, z_i, tmp, x_start, y_start, ld_y, ld_x
+            double real = self.real
+            double imaginary = self.imaginary
+            double pixel_size = self.pixel_size
+            short y, x
+            unsigned int i, iterations = self.iterations
+            short width = self.width, height = self.height
+            np.ndarray[DTYPE_t, ndim=2] content = np.zeros((width, height),
+                                                           dtype=DTYPE)
+        x_start = real - width / 2 * pixel_size
+        y_start = imaginary - height / 2 * pixel_size
+        for x in prange(width, schedule='guided', nogil=True):
+            ld_x = x
+            c_r = x_start + ld_x * pixel_size
+            for y in range(height):
+                ld_y = y
+                c_i = y_start + ld_y * pixel_size
+                content[x, y] = iterate(0, 0, c_r, c_i, iterations)
+        self.content = content
