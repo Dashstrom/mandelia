@@ -1,15 +1,15 @@
-from random import randint
-from PIL import Image
-from datetime import datetime
+import os
 from contextlib import contextmanager
+from datetime import datetime
+from math import log, floor
+from random import randint
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from tkinter.messagebox import showerror, showinfo
 from traceback import print_exc
-from math import log, floor
 
-import numpy as np
-import os
 import cv2
+import numpy as np
+from PIL import Image
 
 from mandelbrot.model.manager import FractaleManager
 from mandelbrot.view.view import View
@@ -36,8 +36,8 @@ def stat_file(path: str) -> str:
     echelle = floor(log(size, 1024))
     print(echelle)
     c = {0: "", 1: "k", 2: "M"}.get(echelle, "G")
-    print(f"{size}/{1024 ** echelle}={size/(1024 ** echelle)}")
-    return f"Chemin : \"{path}\"\nTaille : {size/(1024 ** echelle):.2f}{c}o"
+    print(f"{size}/{1024 ** echelle}={size / (1024 ** echelle)}")
+    return f"Chemin : \"{path}\"\nTaille : {size / (1024 ** echelle):.2f}{c}o"
 
 
 class Controller:

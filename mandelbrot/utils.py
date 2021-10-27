@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 
 def resource_path(relative_path):

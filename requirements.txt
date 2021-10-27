@@ -1,5 +1,5 @@
-numpy~=1.20.3
-Cython~=0.29.23
-future~=0.18.2
-Pillow~=8.2.0
-opencv-python~=4.5.2.52
+numpy
+Cython
+future
+Pillow
+opencv-python

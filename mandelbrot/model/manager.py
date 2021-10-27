@@ -1,6 +1,5 @@
-import os
-
 from PIL import Image
+
 from mandelbrot.model.fractale import (
     Mandelbrot,
     Julia,

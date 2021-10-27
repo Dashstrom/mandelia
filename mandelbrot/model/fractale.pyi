@@ -1,5 +1,5 @@
-from PIL.Image import Image
 import numpy as np
+from PIL.Image import Image
 
 
 class ModuloColoration:

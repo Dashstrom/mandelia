@@ -1,12 +1,12 @@
-from typing import Optional
 from tkinter import LabelFrame, Misc, Button, Frame, Canvas, Tk
-from tkinter.ttk import Progressbar
-from tkinter.constants import NW, X, Y, BOTH, TRUE, W, HORIZONTAL, LEFT, BOTTOM
+from tkinter.constants import NW, X, Y, BOTH, TRUE, W, LEFT
+from typing import Optional
+
 from PIL import Image, ImageTk
 
-from mandelbrot.view.export import Export
 from mandelbrot.utils import resource_path
 from mandelbrot.view.base import AdjustableInput, Output
+from mandelbrot.view.export import Export
 
 
 class Action(LabelFrame):

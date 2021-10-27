@@ -1,12 +1,11 @@
-from mandelbrot.view.base import AdjustableInput
-from tkinter import *
-from typing import Any, Dict, Optional
-from mandelbrot.utils import resource_path
-from tkinter.ttk import Progressbar
 from math import ceil
+from tkinter import *
+from tkinter.ttk import Progressbar
+from typing import Optional
+
 from PIL import Image, ImageTk
-from time import sleep
-from tkinter.filedialog import asksaveasfilename
+
+from mandelbrot.utils import resource_path
 
 
 class Wait(Toplevel):
@@ -56,7 +55,7 @@ class Wait(Toplevel):
         if self.__index is not None:
             self.canvas.delete(self.__index)
         self.__index = self.canvas.create_image(
-            100 - img_w/2, 100 - img_h/2, image=self.__image_tk, anchor=NW)
+            100 - img_w / 2, 100 - img_h / 2, image=self.__image_tk, anchor=NW)
         self.canvas.tag_lower(self.__index)
         self.update_idletasks()
 
