@@ -1,4 +1,4 @@
-from mandelbrot.controler.controller import Controller
+from .controller.controller import Controller
 import sys
 
 if __name__ == "__main__":

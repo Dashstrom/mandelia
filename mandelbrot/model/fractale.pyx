@@ -16,8 +16,6 @@ ctypedef np.uint32_t DTYPE_t
 COLORTYPE = np.uint8
 ctypedef np.uint8_t COLORTYPE_t
 
-CHAR_SIZE = sizeof(unsigned char)
-
 DEF PIXEL_DEFAULT = 0.02
 DEF MIN_PIXEL_SIZE = PIXEL_DEFAULT * 16
 DEF BASE_SAVE_SIZE = 48

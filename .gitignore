@@ -5,7 +5,6 @@ __pycache__/
 # project hidden
 mandelbrot/**/*.c
 mandelbrot/**/*.cpp
-mandelbrot/**/*.pyd
 mandelbrot/**/*.html
 
 # installation package

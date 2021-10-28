@@ -11,9 +11,9 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from mandelbrot.model.manager import FractaleManager
-from mandelbrot.view.view import View
-from mandelbrot.view.wait import Wait
+from ..model.manager import FractaleManager
+from ..view.view import View
+from ..view.wait import Wait
 
 
 def logger(func):

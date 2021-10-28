@@ -5,7 +5,7 @@ from typing import Optional
 
 from PIL import Image, ImageTk
 
-from mandelbrot.utils import resource_path
+from ..utils import resource_path
 
 
 class Wait(Toplevel):

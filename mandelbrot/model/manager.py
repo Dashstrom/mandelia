@@ -1,6 +1,6 @@
 from PIL import Image
 
-from mandelbrot.model.fractale import (
+from .fractale import (
     Mandelbrot,
     Julia,
     Fractale,
@@ -29,7 +29,7 @@ class FractaleManager:
         self.second.resize(int(width / RATIO), int(height / RATIO))
 
     def images(self) -> tuple[Image.Image, Image.Image]:
-        """Return 2 fractals images."""
+        """Return 2 fractals docs."""
         return self.first.image(), self.second.image()
 
     def swap(self) -> None:

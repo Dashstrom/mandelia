@@ -4,9 +4,9 @@ from typing import Optional
 
 from PIL import Image, ImageTk
 
-from mandelbrot.utils import resource_path
-from mandelbrot.view.base import AdjustableInput, Output
-from mandelbrot.view.export import Export
+from .export import Export
+from .widget import AdjustableInput, Output
+from ..utils import resource_path
 
 
 class Action(LabelFrame):
@@ -91,7 +91,7 @@ class View(Tk):
         self.__index = None
         self.__index2 = None
         try:
-            self.iconbitmap(resource_path("logo.ico"))
+            self.iconbitmap(resource_path("view/docs/logo.ico"))
         except Exception as err:
             print(err)
 
