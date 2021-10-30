@@ -5,11 +5,13 @@ from typing import Optional
 
 from PIL import Image, ImageTk
 
-from ..utils import resource_path
+from ..util import rel_path
 
 
 class Wait(Toplevel):
+    """Window for preview."""
     def __init__(self, view: Optional[Misc]) -> None:
+        """Instantiate preview window."""
         super().__init__(view)
         self.resizable(width=False, height=False)
         self.title("Opération lente")
@@ -17,7 +19,7 @@ class Wait(Toplevel):
         self.configure()
         self.geometry("300x300")
         try:
-            self.iconbitmap(resource_path("logo.ico"))
+            self.iconbitmap(rel_path("logo.ico"))
         except Exception as err:
             print(err)
 
@@ -41,9 +43,11 @@ class Wait(Toplevel):
         self.take_control()
 
     def done(self):
+        """Alias for destroy."""
         self.destroy()
 
     def set_preview(self, image: Image.Image):
+        """Set image to preview."""
         w, h = image.size
         ratio_w = w / 200
         ratin_h = h / 200
@@ -60,12 +64,14 @@ class Wait(Toplevel):
         self.update_idletasks()
 
     def progress(self, percent: float) -> None:
+        """Update progress bar."""
         if ceil(percent * 100) != self.var.get():
             self.var.set(ceil(percent * 100))
             self.root.update()
             self.root.update_idletasks()
 
     def take_control(self) -> None:
+        """Take control on main window."""
         self.transient(self.root)
         self.grab_set()
         # self.root.wait_window(self)

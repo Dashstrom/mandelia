@@ -8,11 +8,12 @@ from .fractale import (
 )
 
 RATIO = 3
-SAVE_SIZE = 113
 
 
 class FractaleManager:
+    """Manage fractale mandelbrot and julia."""
     def __init__(self, width: int, height: int) -> None:
+        """Instantiate FractaleManager."""
         self.__coloration = ModuloColoration(3, 1, 10)
         self.__mandelbrot = Mandelbrot(self.__coloration,
                                        width=width,
@@ -24,7 +25,7 @@ class FractaleManager:
         self.second: Fractale = self.__julia
 
     def resize(self, width: int, height: int) -> None:
-        """"""
+        """Resize 2 fractals."""
         self.first.resize(width, height)
         self.second.resize(int(width / RATIO), int(height / RATIO))
 
@@ -40,7 +41,7 @@ class FractaleManager:
         self.first, self.second = self.second, self.first
 
     def is_mandelbrot_first(self) -> bool:
-        """Return True if The first fractal is Mandelbrot."""
+        """Return if The first fractal is Mandelbrot."""
         return self.first == self.__mandelbrot
 
     def motion(self, x: int, y: int) -> None:
@@ -51,27 +52,45 @@ class FractaleManager:
             self.__julia.set_c_r(r)
             self.__julia.set_c_i(i)
 
+    def save_size(self):
+        return 1 + self.__mandelbrot.bytes_size() + self.__julia.bytes_size()
+
     def save(self, path: str) -> None:
         with open(path, "wb") as file:
-            bytes_ = bytes([1 if self.is_mandelbrot_first() else 0])
-            bytes_ += self.__mandelbrot.to_bytes()
-            bytes_ += self.__julia.to_bytes()
-            file.write(bytes_)
+            file.write(self.to_bytes())
+
+    def to_bytes(self) -> bytes:
+        return (bytes([1 if self.is_mandelbrot_first() else 0])
+                + self.__mandelbrot.to_bytes()
+                + self.__julia.to_bytes())
 
     def load(self, path: str) -> None:
         """Load fractals from path."""
-        with open(path, "rb") as path:
-            data = path.read(SAVE_SIZE + 1)
-        if len(data) != SAVE_SIZE:
+        try:
+            with open(path, "rb") as path:
+                data = path.read(self.save_size() + 1)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"Le fichier {path!r} n'a pas pu être trouvé")
+        self.from_bytes(data)
+
+    def from_bytes(self, data: bytes):
+        if len(data) != self.save_size():
             raise ValueError(
-                f"File must contain {SAVE_SIZE} bytes , got {len(data)}")
-        is_mandelbrot_flag = data[0]
-        if is_mandelbrot_flag != self.is_mandelbrot_first():
-            self.swap()
-        mandelbrot_data = data[1:49]
-        julia_data = data[49:]
-        self.__julia.from_bytes(julia_data)
-        self.__mandelbrot.from_bytes(mandelbrot_data)
+                "Mauvais type de fichier.\n"
+                "Ca taille ne correspond pas au format d'un fichier .mbc")
+        temp = self.to_bytes()
+        try:
+            is_mandelbrot = data[0]
+            if is_mandelbrot != self.is_mandelbrot_first():
+                self.swap()
+            mandelbrot_data = data[1:36]
+            julia_data = data[36:]
+            self.__julia.from_bytes(julia_data)
+            self.__mandelbrot.from_bytes(mandelbrot_data)
+        except Exception as e:
+            self.from_bytes(temp)  # need to return in previous state
+            raise e
 
     def zoom(self, x: int, y: int, power: float) -> None:
         """Zoom in Image."""
@@ -123,7 +142,7 @@ class FractaleManager:
 
     @property
     def iter_pixel(self) -> float:
-        """Iteration per pixel. If not pixel return 0."""
+        """IterationInteraction per pixel. If not pixel return 0."""
         return self.first.iterations_per_pixel()
 
     @property

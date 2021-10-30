@@ -6,12 +6,14 @@ from PIL import Image, ImageTk
 
 from .export import Export
 from .widget import AdjustableInput, Output
-from ..utils import resource_path
+from ..util import rel_path
 
 
-class Action(LabelFrame):
+class StateInteraction(LabelFrame):
+    """Interaction for state."""
     def __init__(self, master: Optional[Misc]) -> None:
-        super().__init__(master, text="Action", labelanchor=NW)
+        """Instantiate StateInteraction."""
+        super().__init__(master, text="StateInteraction", labelanchor=NW)
 
         self.actualization = Button(self, text="Actualiser")
         self.reset = Button(self, text="Réinitialiser")
@@ -20,8 +22,10 @@ class Action(LabelFrame):
         self.reset.pack(pady=5, fill=X, padx=20)
 
 
-class File(LabelFrame):
+class FileInteraction(LabelFrame):
+    """Interaction for file."""
     def __init__(self, master: Optional[Misc]) -> None:
+        """Instantiate StateInteraction."""
         super().__init__(master, text="Fichier", labelanchor=NW)
 
         self.load = Button(self, text="Charger")
@@ -33,8 +37,10 @@ class File(LabelFrame):
         self.export.pack(pady=5, fill=X, padx=20)
 
 
-class Color(LabelFrame):
+class ColorInteraction(LabelFrame):
+    """Interaction for color."""
     def __init__(self, master: Optional[Misc]) -> None:
+        """Instantiate ColorInteraction."""
         super().__init__(master, text="Couleur", labelanchor=NW)
 
         self.red = AdjustableInput(self, "Rouge", 0, 3, 20)
@@ -48,9 +54,11 @@ class Color(LabelFrame):
         self.button.pack(pady=5, fill=X, padx=20)
 
 
-class Iteration(LabelFrame):
+class IterationInteraction(LabelFrame):
+    """Interaction for iteration."""
     def __init__(self, master: Optional[Misc]) -> None:
-        super().__init__(master, text="Iteration", labelanchor=NW)
+        """Instantiate IterationInteraction."""
+        super().__init__(master, text="IterationInteraction", labelanchor=NW)
 
         self.max = AdjustableInput(self, "Max", 100, 2_000, 10_000)
         self.sum = Output(self, "Total", 0)
@@ -61,8 +69,10 @@ class Iteration(LabelFrame):
         self.per_pixel.pack(anchor=W, fill=X)
 
 
-class Positioning(LabelFrame):
+class PositioningInteraction(LabelFrame):
+    """Interaction for positioning."""
     def __init__(self, master: Optional[Misc]) -> None:
+        """Instantiate PositioningInteraction."""
         super().__init__(master, text="Positionnement", labelanchor=NW)
 
         self.zoom = Output(self, text="Zoom", default=1)
@@ -74,8 +84,41 @@ class Positioning(LabelFrame):
         self.imaginary.pack(anchor=W, fill=X)
 
 
+class MainInteraction(Frame):
+    """Manage all interaction."""
+    def __init__(self, master: Optional[Misc]) -> None:
+        """Instantiate MainInteraction."""
+        super().__init__(master)
+        self._export_callback = None
+        self.action = StateInteraction(self)
+        self.file = FileInteraction(self)
+        self.color = ColorInteraction(self)
+        self.iteration = IterationInteraction(self)
+        self.positioning = PositioningInteraction(self)
+
+        self.action.pack(fill=X, padx=10)
+        self.file.pack(fill=X, pady=5, padx=10)
+        self.color.pack(fill=X, pady=5, padx=10)
+        self.iteration.pack(fill=X, pady=5, padx=10)
+        self.positioning.pack(fill=X, pady=5, padx=10)
+
+        self.file.export.configure(command=self.open_export)
+
+    def bind_export(self, func):
+        """Set function to call on export."""
+        self._export_callback = func
+
+    def open_export(self):
+        """Ask for export."""
+        export = Export(self)
+        if export.data and hasattr(self, "_export_callback"):
+            self._export_callback(export.data)
+
+
 class View(Tk):
+    """Main view."""
     def __init__(self) -> None:
+        """Instantiate View."""
         super().__init__()
         self.resizable(width=True, height=True)
         self.title("Mandelbrot")
@@ -91,73 +134,59 @@ class View(Tk):
         self.__index = None
         self.__index2 = None
         try:
-            self.iconbitmap(resource_path("view/docs/logo.ico"))
+            self.iconbitmap(rel_path("view/images/logo.ico"))
         except Exception as err:
             print(err)
 
-        self.canvas = Canvas(self, width=600, height=600, bd=0,
-                             highlightthickness=0, bg="black")
-        self.aside = Frame(self)
-        self.action = Action(self.aside)
-        self.file = File(self.aside)
-        self.color = Color(self.aside)
-        self.iteration = Iteration(self.aside)
-        self.positioning = Positioning(self.aside)
-
-        self.aside.pack(side=LEFT, fill=Y)
-        self.canvas.pack(fill=BOTH, expand=TRUE)
-        self.action.pack(fill=X, padx=10)
-        self.file.pack(fill=X, pady=5, padx=10)
-        self.color.pack(fill=X, pady=5, padx=10)
-        self.iteration.pack(fill=X, pady=5, padx=10)
-        self.positioning.pack(fill=X, pady=5, padx=10)
-
-        self.file.export.configure(command=self.open_export)
-
-    def bind_export(self, func):
-        self._export_callback = func
-
-    def open_export(self):
-        export = Export(self)
-        if export.data and hasattr(self, "_export_callback"):
-            self._export_callback(export.data)
+        self.visualization = Canvas(self, width=600, height=600, bd=0,
+                                    highlightthickness=0, bg="black")
+        self.interaction = MainInteraction(self)
+        self.interaction.pack(side=LEFT, fill=Y)
+        self.visualization.pack(fill=BOTH, expand=TRUE)
 
     def set_image(self, image: Image.Image):
+        """Set the main image."""
         self.__image = image
         self.__image_tk = ImageTk.PhotoImage(self.__image)
         if self.__index is not None:
-            self.canvas.delete(self.__index)
-        self.__index = self.canvas.create_image(
+            self.visualization.delete(self.__index)
+        self.__index = self.visualization.create_image(
             0, 0, image=self.__image_tk, anchor=NW)
-        self.canvas.tag_lower(self.__index)
+        self.visualization.tag_lower(self.__index)
         self.update_idletasks()
 
     def set_2nd_image(self, image: Image.Image):
+        """Set the second image."""
         self.__image2 = image
         self.__image_tk2 = ImageTk.PhotoImage(self.__image2)
         if self.__index2 is not None:
-            self.canvas.delete(self.__index2)
-        self.__index2 = self.canvas.create_image(
+            self.visualization.delete(self.__index2)
+        self.__index2 = self.visualization.create_image(
             0, 0, image=self.__image_tk2, anchor=NW)
-        self.canvas.tag_raise(self.__index2)
+        self.visualization.tag_raise(self.__index2)
         self.update_idletasks()
 
     @property
     def width(self):
-        return self.canvas.winfo_width()
+        """Get width of visualization canvas."""
+        return self.visualization.winfo_width()
 
     @property
     def height(self):
-        return self.canvas.winfo_height()
+        """Get height of visualization canvas."""
+        return self.visualization.winfo_height()
 
     @property
     def red(self):
-        return self.color.red.var
+        """Get red color variable."""
+        return self.interaction.color.red.var
 
     @property
     def green(self):
-        return self.color.green.var
+        """Get green color variable."""
+        return self.interaction.color.green.var
 
     @property
     def blue(self):
-        return self.color.blue.var
+        """Get blue color variable."""
+        return self.interaction.color.blue.var

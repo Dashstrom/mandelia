@@ -1,4 +1,4 @@
 from .export import Export
-from .view import Action, File, Color, Iteration, Positioning, View
+from .view import StateInteraction, FileInteraction, ColorInteraction, IterationInteraction, PositioningInteraction, View
 from .wait import Wait
 from .widget import Labeled, VariableContainer, AdjustableInput

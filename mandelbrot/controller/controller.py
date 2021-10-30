@@ -1,7 +1,5 @@
-import os
 from contextlib import contextmanager
-from datetime import datetime
-from math import log, floor
+from math import log
 from random import randint
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from tkinter.messagebox import showerror, showinfo
@@ -14,68 +12,51 @@ from PIL import Image
 from ..model.manager import FractaleManager
 from ..view.view import View
 from ..view.wait import Wait
-
-
-def logger(func):
-    def wrapper(*args, **kwargs):
-        str_args = ", ".join(f"{arg!r}" for arg in args)
-        str_kwargs = ",".join(f"{k}={arg!r}" for k, arg in kwargs.items())
-        str_params = ",".join(part for part in (str_args, str_kwargs) if part)
-        print(f"[{datetime.now()}] Call {func.__qualname__}({str_params})")
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def call(func):
-    return lambda *_: func()
-
-
-def stat_file(path: str) -> str:
-    size = os.path.getsize(path)
-    echelle = floor(log(size, 1024))
-    print(echelle)
-    c = {0: "", 1: "k", 2: "M"}.get(echelle, "G")
-    print(f"{size}/{1024 ** echelle}={size / (1024 ** echelle)}")
-    return f"Chemin : \"{path}\"\nTaille : {size / (1024 ** echelle):.2f}{c}o"
+from ..util import logger, stat_file
 
 
 class Controller:
-
+    """General controller."""
     def __init__(self, path: str = None) -> None:
+        """Instantiate Controller."""
         with self.lock_update():
-            self.view = View()
-            self.view.update()
-            self.manager = FractaleManager(self.view.width, self.view.height)
+            view = self.view = View()
+            view.update()
+            self.manager = FractaleManager(view.width, view.height)
             self.__ignore_update = False
-            self.view.action.actualization.config(
-                command=self.on_actualization)
-            self.view.color.button.config(command=self.on_random_color)
-            self.view.action.reset.config(command=self.on_reset)
-            self.view.file.save.config(command=self.on_save)
-            self.view.file.load.config(command=self.on_load)
-            self.view.canvas.bind("<MouseWheel>", self.on_zoom)
-            self.view.canvas.bind("<Configure>", self.on_resize)
-            self.view.canvas.bind('<Motion>', self.on_motion)
-            self.view.canvas.bind('<Double-1>', call(self.on_swap))
-            self.view.red.trace("w", call(self.on_color))
-            self.view.green.trace("w", call(self.on_color))
-            self.view.blue.trace("w", call(self.on_color))
-            self.view.iteration.max.var.trace("w", call(self.on_iteration_max))
-            self.view.bind_export(self.on_export)
-        if path:
-            if not self._load_file(path):
+
+            interaction = view.interaction
+            interaction.action.actualization.config(command=self.on_actualization)
+            interaction.color.button.config(command=self.on_random_color)
+            interaction.action.reset.config(command=self.on_reset)
+            interaction.file.save.config(command=self.on_save)
+            interaction.file.load.config(command=self.on_load)
+            interaction.bind_export(self.on_export)
+            interaction.iteration.max.var.trace(
+                "w", lambda *_: self.on_iteration_max())
+
+            view.visualization.bind("<MouseWheel>", self.on_zoom)
+            view.visualization.bind("<Configure>", self.on_resize)
+            view.visualization.bind('<Motion>', self.on_motion)
+            view.visualization.bind('<Double-1>', lambda *_:self.on_swap())
+            view.red.trace("w", lambda *_: self.on_color)
+            view.green.trace("w", lambda *_: self.on_color)
+            view.blue.trace("w", lambda *_: self.on_color)
+        if path is not None:
+            if not self.load_configuration(path):
                 self.update()
         else:
             self.update()
         self.view.mainloop()
 
     def __repr__(self) -> str:
+        """Represent a Controller."""
         name = self.__class__.__name__
         return f"<{name} locked_update={self.locked_update}>"
 
     @logger
     def on_swap(self):
+        """Handle swap between julia and mandelbrot."""
         self.manager.swap()
         img1, img2 = self.manager.images()
         self.view.set_image(img1)
@@ -84,19 +65,19 @@ class Controller:
 
     @logger
     def _end_export(self, path: str):
-        showinfo("Exporter",
-                 "Exportation réussi\n"
-                 + stat_file(path))
+        """Show information about file."""
+        showinfo("Exporter", f"Exportation réussi\n{stat_file(path)}")
 
-    @logger
-    def start_export(self, path: str):
-        size = os.path.getsize(path)
-        showinfo("Exporter",
-                 "Exportation réussi\n"
-                 + stat_file(path))
+    # @logger
+    # def start_export(self, path: str):
+    #     size = os.path.getsize(path)
+    #     showinfo("Exporter",
+    #              "Exportation réussi\n"
+    #              + stat_file(path))
 
     @logger
     def on_export(self, data):
+        """Handle export."""
         print(data)
         p: str = data["path"].lower()
         width, height = data["width"], data["height"]
@@ -157,54 +138,44 @@ class Controller:
             fractale.from_bytes(data_frac)
 
     def on_motion(self, event):
+        """Handle mouse movement."""
         self.manager.motion(event.x, event.y)
         if self.manager.is_mandelbrot_first():
             img = self.manager.second.image()
             self.view.set_2nd_image(img)
 
-    def _load_file(self, path):
-        try:
-            self.manager.load(path)
-            self.update()
-            self.update_colors()
-            return True
-        except FileNotFoundError:
-            showerror(
-                "Charger la configuration",
-                "Le fichier n'a pas pu être trouvé"
-            )
-        except ValueError:
-            showerror(
-                "Charger la configuration",
-                "Mauvais type de fichier.\n"
-                "Ca taille ne correspond pas au format d'un fichier .mbc"
-            )
-        except OSError:
-            print_exc()
-        return False
+    def load_configuration(self, path):
+        """Load configuration with displayable error."""
+        self.manager.load(path)
+        self.update()
+        self.update_colors()
 
     @contextmanager
     def lock_update(self):
+        """Context manager for lock update for a short while."""
         self.__ignore_update = True
         yield
         self.__ignore_update = False
 
     @property
     def locked_update(self):
+        """Return if update is locked."""
         return self.__ignore_update
 
     @logger
     def on_load(self):
+        """Handle load of configuration."""
         path = askopenfilename(
             title="Charger la configuration",
             filetypes=[('Mandelbrot configuration Files', '.mbc')],
             initialfile="projet.mbc"
         )
         if path:
-            self._load_file(path)
+            self.load_configuration(path)
 
     @logger
     def on_save(self):
+        """Handle save of configuration."""
         path = asksaveasfilename(
             title="Enregistrer la configuration",
             filetypes=[('Mandelbrot configuration Files', '.mbc')],
@@ -226,15 +197,18 @@ class Controller:
 
     @logger
     def on_zoom(self, event):
+        """Handle wheel bearing for zoom."""
         self.manager.zoom(event.x, event.y, 2 if event.delta > 0 else 0.5)
         self.update()
 
     @logger
     def on_iteration_max(self):
-        self.manager.iterations = self.view.iteration.max.var.get()
+        """Handle change of max iterations."""
+        self.manager.iterations = self.view.interaction.iteration.max.var.get()
 
     @logger
     def on_color(self):
+        """Handle color changes."""
         if self.locked_update:
             return
         self.manager.color(
@@ -247,28 +221,32 @@ class Controller:
 
     @logger
     def update(self):
+        """Update images."""
         if self.locked_update:
             return
         manager = self.manager
         view = self.view
         with self.lock_update():
-            view.positioning.real.var.set(manager.real)
-            view.positioning.imaginary.var.set(manager.imaginary)
-            view.positioning.zoom.var.set(manager.pixel_size)
-            view.iteration.max.var.set(manager.iterations)
-            view.iteration.sum.var.set(f"{manager.iter_sum} i")
-            view.iteration.per_pixel.var.set(f"{manager.iter_pixel:.2f} i/pxl")
+            interaction = view.interaction
+            interaction.positioning.real.var.set(manager.real)
+            interaction.positioning.imaginary.var.set(manager.imaginary)
+            interaction.positioning.zoom.var.set(manager.pixel_size)
+            interaction.iteration.max.var.set(manager.iterations)
+            interaction.iteration.sum.var.set(f"{manager.iter_sum} i")
+            interaction.iteration.per_pixel.var.set(f"{manager.iter_pixel:.2f} i/pxl")
             img = manager.first.image()
             self.view.set_image(img)
 
     @logger
     def on_random_color(self) -> None:
+        """Handle random color button pressed."""
         rgb = [randint(0, 6) + randint(0, 6) + randint(0, 4) for _ in range(3)]
         self.manager.color(*rgb)
         self.update_colors()
         self.update()
 
     def update_colors(self) -> None:
+        """Update colors."""
         with self.lock_update():
             r, g, b = self.manager.rgb
             self.view.red.set(r)
@@ -279,17 +257,20 @@ class Controller:
 
     @logger
     def on_resize(self, event) -> None:
+        """Handle window resize."""
         self.manager.resize(event.width, event.height)
         self.view.set_2nd_image(self.manager.second.image())
         self.update()
 
     @logger
     def on_actualization(self):
+        """Handle actualization button."""
         self.manager.resize(self.view.width, self.view.height)
         self.update()
 
     @logger
     def on_reset(self):
+        """Handle reset button."""
         self.manager.reset()
         self.view.set_2nd_image(self.manager.second.image())
         self.update()

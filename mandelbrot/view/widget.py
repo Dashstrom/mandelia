@@ -6,25 +6,31 @@ T = TypeVar("T", StringVar, IntVar, DoubleVar, BooleanVar)
 
 
 class Labeled(Frame, ABC):
+    """Label for another widget."""
     def __init__(self, master: Optional[Misc], text: str) -> None:
+        """Instantiate Labeled."""
         super().__init__(master)
         self.label = Label(self, text=text, width=10, anchor=NW)
         self.label.pack(side=LEFT)
 
 
 class VariableContainer(Generic[T]):
+    """Contain a variable."""
     def __init__(self, var: T) -> None:
+        """Instantiate Labeled."""
         self.__var: T = var
 
     @property
     def var(self) -> T:
+        """Get the variable."""
         return self.__var
 
 
 class AdjustableInput(Labeled, VariableContainer[DoubleVar]):
-
+    """Widget to have a variable with a scale and an entry."""
     def __init__(self, master: Optional[Misc], text: str, min_: int,
                  default: int, max_: int, entry_width: int = 6) -> None:
+        """Instantiate AdjustableInput."""
         Labeled.__init__(self, master, text)
         VariableContainer.__init__(self, DoubleVar(self, float(default)))
         self.min = min_
@@ -39,24 +45,26 @@ class AdjustableInput(Labeled, VariableContainer[DoubleVar]):
                            textvariable=self.entry_var)
         self.scale.pack(side=LEFT, fill=X, expand=True)
         self.entry.pack(side=LEFT, padx=3)
-        self.entry_var.trace("w", self._update_scale)
-        self.var.trace("w", self._update_entry)
+        self.entry_var.trace("w", self.on_update_scale)
+        self.var.trace("w", self.on_update_entry)
         self.entry.bind("<FocusOut>", self._event_focus_out)
         self.entry.bind("<KeyPress>", self.on_keypress)
 
     def on_keypress(self, event) -> None:
-        if event.keysym == "Down":
-            self.var.set(max(self.var.get() - 1, self.min))
-        elif event.keysym == "Up":
-            self.var.set(min(self.var.get() + 1, self.max))
+        """Handle keypress"""
+        delta = {"Down": -1, "Up": 1}.get(event.keysym, 0)
+        if delta:
+            self.var.set(max(self.var.get() + delta, self.min))
 
     def disable(self) -> None:
+        """Disable the entry."""
         self.entry["state"] = "disable"
         self.scale["sliderrelief"] = "sunken"
         self.scale["state"] = "disable"
         self.label["state"] = "disable"
 
     def enable(self) -> None:
+        """Enable the entry."""
         self.entry["state"] = "normal"
         self.scale["sliderrelief"] = "raised"
         self.scale["state"] = "normal"
@@ -64,14 +72,17 @@ class AdjustableInput(Labeled, VariableContainer[DoubleVar]):
 
     @property
     def error(self) -> bool:
+        """Get the error state."""
         return self.__error
 
     @error.setter
     def error(self, state: Any) -> None:
+        """Set error on true or false."""
         self.__error = bool(state)
         self.entry.configure(bg="red" if self.__error else "white")
 
-    def _update_scale(self, *_: Any) -> None:
+    def on_update_scale(self, *_: Any) -> None:
+        """Called for update the scale."""
         text = self.entry_var.get()
         self.error = False
         max_chars = max(len(str(self.max)), 1)
@@ -93,10 +104,12 @@ class AdjustableInput(Labeled, VariableContainer[DoubleVar]):
             else:
                 self.scale.set(value)
 
-    def _update_entry(self, *_: Any) -> None:
+    def on_update_entry(self, *_: Any) -> None:
+        """Called for update the entry."""
         self.entry_var.set(str(int(self.var.get())))
 
     def _event_focus_out(self, *_: Any) -> None:
+        """Return to the previous valid state."""
         if self.error:
             try:
                 int(self.entry_var.get())
@@ -105,12 +118,14 @@ class AdjustableInput(Labeled, VariableContainer[DoubleVar]):
                 nb_chars = len(self.entry_var.get())
                 if nb_chars < min_chars:
                     self.scale.set(str(self.min))
-            self._update_entry(self)
+            self.on_update_entry(self)
 
 
 class Output(Labeled, VariableContainer[StringVar]):
+    """Read-Only Entry."""
     def __init__(self, master: Optional[Misc],
                  text: str, default: Any) -> None:
+        """Instantiate Output."""
         Labeled.__init__(self, master, text)
         VariableContainer.__init__(self, StringVar(self, str(default)))
         self.sep = Label(self, text=":")
@@ -121,7 +136,9 @@ class Output(Labeled, VariableContainer[StringVar]):
 
 
 class InputOutput(Labeled, VariableContainer[StringVar]):
+    """Writable Entry."""
     def __init__(self, master: Optional[Misc], text, default: Any) -> None:
+        """Instantiate InputOutput."""
         Labeled.__init__(self, master, text)
         VariableContainer.__init__(self, StringVar(self, str(default)))
         self.sep = Label(self, text=":")

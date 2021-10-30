@@ -18,42 +18,7 @@ ctypedef np.uint8_t COLORTYPE_t
 
 DEF PIXEL_DEFAULT = 0.02
 DEF MIN_PIXEL_SIZE = PIXEL_DEFAULT * 16
-DEF BASE_SAVE_SIZE = 48
-DEF JULIA_SIZE = BASE_SAVE_SIZE + 16
-DEF MANDELBROT_SIZE = BASE_SAVE_SIZE
 
-cpdef check_bytes_size(bytes_, int size):
-    """Check the count of bytes and type."""
-    if not isinstance(bytes_, bytes):
-        raise TypeError(f"bytes_ must be bytes type, got {type(bytes)}")
-    elif len(bytes_) != size:
-        raise ValueError(
-            f"bytes_ must contain {size} bytes , got {len(bytes_)}")
-
-cdef to_bytes(obj):
-    """Convert numbers into bytes."""
-    if isinstance(obj, int):
-        return s.pack(">I", int(obj))
-    elif isinstance(obj, float):
-        return s.pack("d", float(obj))
-    else:
-        raise TypeError(f"{type(obj)} is not valid object for bytes")
-
-cdef from_bytes(bytes_):
-    """
-    Convert bytes into numbers based on bytes length.
-    
-    8 for float and 4 for int.
-    """
-    if not isinstance(bytes_, bytes):
-        raise TypeError("incorrect type")
-    if len(bytes_) == 4:
-        return s.unpack(">I", bytes_)[0]
-    elif len(bytes_) == 8:
-        return s.unpack("d", bytes_)[0]
-    else:
-        raise TypeError(
-            f"bytes have invalid length is not valid object for bytes")
 
 cdef unsigned int iterate(double z_r, double z_i, double c_r, double c_i,
                           unsigned int iterations) nogil except +:
@@ -73,30 +38,31 @@ cdef unsigned int iterate(double z_r, double z_i, double c_r, double c_i,
             break
     return 0 if i == iterations - 1 else i + 1
 
+
+modulo_coloration_saver = s.Struct("BBB")
 cdef class ModuloColoration:
-    cdef public unsigned char r, g, b
+    cdef:
+        public unsigned char r, g, b
 
     def __init__(self, r, g, b):
-        self.r = r
-        self.g = g
-        self.b = b
+        self.r, self.g, self.b = r, g, b
 
     cpdef to_bytes(self):
         """Convert ModuloColor into bytes."""
-        return to_bytes(self.r) + to_bytes(self.g) + to_bytes(self.b)
+        return modulo_coloration_saver.pack(self.r, self.g, self.b)
 
     cpdef from_bytes(self, bytes bytes_):
         """Convert bytes into ModuloColor."""
-        check_bytes_size(bytes_, 12)
-        self.r = from_bytes(bytes_[0:4])
-        self.g = from_bytes(bytes_[4:8])
-        self.b = from_bytes(bytes_[8:12])
+        self.r, self.g, self.b = modulo_coloration_saver.unpack(bytes_)
+
+    cpdef bytes_size(self):
+        return modulo_coloration_saver.size
 
     @cython.boundscheck(False)  # turn off bounds-checking
     @cython.wraparound(False)  # turn off negative index wrapping
     cpdef np.ndarray[COLORTYPE_t, ndim=3] colorize(
             self, np.ndarray[DTYPE_t, ndim=2] np_fractale):
-        """Color a two-dimensional array."""
+        """ColorInteraction a two-dimensional array."""
         cdef:
             short width, height, x, y
             unsigned char r = self.r, g = self.g, b = self.b
@@ -115,6 +81,7 @@ cdef class ModuloColoration:
                     image[y, x, 2] = b * i
         return image
 
+fractale_saver = s.Struct("dddhhI")
 cdef class Fractale:
     cdef:
         readonly double real, imaginary, pixel_size
@@ -125,8 +92,8 @@ cdef class Fractale:
         ModuloColoration color
 
     def __init__(self, ModuloColoration color, real=0, imaginary=0,
-                 iterations=1_000,
-                 width=48, height=48, pixel_size=PIXEL_DEFAULT):
+                 iterations=1_000, width=48, height=48,
+                 pixel_size=PIXEL_DEFAULT):
         self.content = np.zeros((width, height), dtype=DTYPE)
         self.color = color
         self.real = real
@@ -278,28 +245,32 @@ cdef class Fractale:
 
     cpdef to_bytes(self):
         """Return bytes representative of the fractal."""
-        return (to_bytes(self.real)
-                + to_bytes(self.imaginary)
-                + to_bytes(self.pixel_size)
-                + to_bytes(self.width)
-                + to_bytes(self.height)
-                + to_bytes(self.iterations)
-                + self.color.to_bytes())
+        data = fractale_saver.pack(
+            self.real,
+            self.imaginary,
+            self.pixel_size,
+            self.width,
+            self.height,
+            self.iterations
+        )
+        data += self.color.to_bytes()
+        return data
 
     cpdef from_bytes(self, bytes bytes_):
         """Load data on the fractal."""
         cdef short w = self.width, h = self.height
-        check_bytes_size(bytes_, 48)
-        self.real = from_bytes(bytes_[0:8])
-        self.imaginary = from_bytes(bytes_[8:16])
-        self.pixel_size = from_bytes(bytes_[16:24])
-        self.width = from_bytes(bytes_[24:28])
-        self.height = from_bytes(bytes_[28:32])
-        self.iterations = from_bytes(bytes_[32:36])
-        self.color.from_bytes(bytes_[36:48])
+        record = fractale_saver.unpack(bytes_[:32])
+        (self.real, self.imaginary, self.pixel_size,
+            self.width, self.height, self.iterations) = record
         self.resize(w, h)
+        self.color.from_bytes(bytes_[32:])
         self.need_update = True
 
+    cpdef bytes_size(self):
+        return fractale_saver.size + self.color.bytes_size()
+
+
+julia_saver = s.Struct("dd")
 cdef class Julia(Fractale):
     cdef:
         readonly double c_r, c_i
@@ -324,24 +295,22 @@ cdef class Julia(Fractale):
     cpdef to_bytes(self):
         """Return bytes representative of the fractal."""
         return (super(Julia, self).to_bytes()
-                + to_bytes(self.c_r)
-                + to_bytes(self.c_i))
+                + julia_saver.pack(self.c_r, self.c_i))
 
     cpdef from_bytes(self, bytes bytes_):
         """Load data on the fractal."""
-        morsel = bytes_[-16:]
-        bytes_ = bytes_[:-16]
-        check_bytes_size(morsel, 16)
-        super(Julia, self).from_bytes(bytes_)
-        self.c_r = from_bytes(morsel[:8])
-        self.c_i = from_bytes(morsel[8:])
+        super(Julia, self).from_bytes(bytes_[:-16])
+        self.c_r, self.c_i = julia_saver.unpack(bytes_[-16:])
+
+    cpdef bytes_size(self):
+        return super(Julia, self).bytes_size() + julia_saver.size
 
     @cython.boundscheck(False)  # turn off bounds-checking
     @cython.wraparound(False)  # turn off negative index wrapping
     cdef np.ndarray[DTYPE_t, ndim=2] _compute(self):
         """Compute fractal."""
         cdef:
-            double z_r, z_i, pre_z_r, tmp, x_start, y_start, ld_y, ld_x
+            double z_r, z_i, tmp, x_start, y_start
             double real = self.real
             double imaginary = self.imaginary
             double pixel_size = self.pixel_size
@@ -352,17 +321,15 @@ cdef class Julia(Fractale):
             unsigned int i, iterations = self.iterations
             np.ndarray[DTYPE_t, ndim=2] content = np.zeros((width, height),
                                                            dtype=DTYPE)
-        x_start = real - width / 2 * pixel_size
-        y_start = imaginary - height / 2 * pixel_size
+        x_start = real - (width >> 1) * pixel_size
+        y_start = imaginary - (height >> 1) * pixel_size
         for x in prange(width, schedule='guided', nogil=True):
-            ld_x = x
-            pre_z_r = x_start + ld_x * pixel_size
+            z_r = x_start + x * pixel_size
             for y in range(height):
-                ld_y = y
-                z_r = pre_z_r
-                z_i = y_start + ld_y * pixel_size
+                z_i = y_start + y * pixel_size
                 content[x, y] = iterate(z_r, z_i, c_r, c_i, iterations)
         self.content = content
+
 
 cdef class Mandelbrot(Fractale):
     def __init__(self, *args, **kwargs):
@@ -371,9 +338,9 @@ cdef class Mandelbrot(Fractale):
     @cython.boundscheck(False)  # turn off bounds-checking
     @cython.wraparound(False)  # turn off negative index wrapping
     cdef np.ndarray[DTYPE_t, ndim=2] _compute(self):
-        """Compute fractal."""
+        """Compute mandelbrot fractale."""
         cdef:
-            double c_r, c_i, z_r, z_i, tmp, x_start, y_start, ld_y, ld_x
+            double c_r, c_i, z_r, z_i, tmp, x_start, y_start
             double real = self.real
             double imaginary = self.imaginary
             double pixel_size = self.pixel_size
@@ -382,13 +349,11 @@ cdef class Mandelbrot(Fractale):
             short width = self.width, height = self.height
             np.ndarray[DTYPE_t, ndim=2] content = np.zeros((width, height),
                                                            dtype=DTYPE)
-        x_start = real - width / 2 * pixel_size
-        y_start = imaginary - height / 2 * pixel_size
+        x_start = real - (width >> 1) * pixel_size
+        y_start = imaginary - (height >> 1) * pixel_size
         for x in prange(width, schedule='guided', nogil=True):
-            ld_x = x
-            c_r = x_start + ld_x * pixel_size
+            c_r = x_start + x * pixel_size
             for y in range(height):
-                ld_y = y
-                c_i = y_start + ld_y * pixel_size
+                c_i = y_start + y * pixel_size
                 content[x, y] = iterate(0, 0, c_r, c_i, iterations)
         self.content = content

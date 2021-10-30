@@ -3,11 +3,13 @@ from tkinter.filedialog import asksaveasfilename
 from typing import Any, Dict, Optional
 
 from .widget import AdjustableInput
-from ..utils import resource_path
+from ..util import rel_path
 
 
 class Export(Toplevel):
+    """Widget for ask export configuration to user."""
     def __init__(self, view: Optional[Misc]) -> None:
+        """Instantiate Export."""
         super().__init__(view)
         self.resizable(width=False, height=False)
         self.title("Exporter")
@@ -15,7 +17,7 @@ class Export(Toplevel):
         self.configure()
         self.geometry("300x300")
         try:
-            self.iconbitmap(resource_path("logo.ico"))
+            self.iconbitmap(rel_path("logo.ico"))
         except Exception as err:
             print(err)
         self.data: Dict[str, Any] = {}
@@ -36,8 +38,8 @@ class Export(Toplevel):
         self.speed = AdjustableInput(self.details, "Vitesse", 5, 10, 50)
         self.button = Button(self, text="Terminer", command=self.terminate)
 
-        self.format_var.trace("w", lambda *_: self.disable_useless())
-        self.disable_useless()
+        self.format_var.trace("w", lambda *_: self.on_disable_useless())
+        self.on_disable_useless()
 
         self.format.pack(padx=5, pady=5, ipady=3, fill=X)
         self.formats["PNG"].pack(side=LEFT, padx=3, fill=X, expand=True)
@@ -55,7 +57,8 @@ class Export(Toplevel):
 
         self.take_control()
 
-    def disable_useless(self):
+    def on_disable_useless(self):
+        """Disable settings incompatible with actual extension."""
         fmt = self.format_var.get()
         if fmt == "PNG":
             self.speed.disable()
@@ -65,6 +68,7 @@ class Export(Toplevel):
             self.fps.enable()
 
     def terminate(self):
+        """End of export."""
         fmt = self.format_var.get()
         filetypes = [('PNG', '*.PNG *.PNS')]
         filetypes.insert(0 if fmt == "GIF" else 1, ('GIF', '*.GIF'))
@@ -85,6 +89,7 @@ class Export(Toplevel):
             self.destroy()
 
     def take_control(self):
+        """Take control on main window."""
         self.transient(self.root)
         self.grab_set()
         self.root.wait_window(self)
