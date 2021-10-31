@@ -3,7 +3,7 @@ from tkinter.filedialog import asksaveasfilename
 from typing import Any, Dict, Optional
 
 from .widget import AdjustableInput
-from ..util import rel_path
+from ..util import LOGO_PATH
 
 
 class Export(Toplevel):
@@ -17,7 +17,7 @@ class Export(Toplevel):
         self.configure()
         self.geometry("300x300")
         try:
-            self.iconbitmap(rel_path("logo.ico"))
+            self.iconbitmap(LOGO_PATH)
         except Exception as err:
             print(err)
         self.data: Dict[str, Any] = {}

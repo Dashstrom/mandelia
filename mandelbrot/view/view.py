@@ -6,7 +6,7 @@ from PIL import Image, ImageTk
 
 from .export import Export
 from .widget import AdjustableInput, Output
-from ..util import rel_path
+from ..util import LOGO_PATH
 
 
 class StateInteraction(LabelFrame):
@@ -134,7 +134,7 @@ class View(Tk):
         self.__index = None
         self.__index2 = None
         try:
-            self.iconbitmap(rel_path("view/images/logo.ico"))
+            self.iconbitmap(LOGO_PATH)
         except Exception as err:
             print(err)
 

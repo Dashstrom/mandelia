@@ -5,7 +5,7 @@ from typing import Optional
 
 from PIL import Image, ImageTk
 
-from ..util import rel_path
+from ..util import LOGO_PATH
 
 
 class Wait(Toplevel):
@@ -19,7 +19,7 @@ class Wait(Toplevel):
         self.configure()
         self.geometry("300x300")
         try:
-            self.iconbitmap(rel_path("logo.ico"))
+            self.iconbitmap(LOGO_PATH)
         except Exception as err:
             print(err)
 

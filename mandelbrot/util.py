@@ -37,3 +37,6 @@ def stat_file(path: str) -> str:
     c = {0: "", 1: "k", 2: "M"}.get(echelle, "G")
     print(f"{size}/{1024 ** echelle}={size / (1024 ** echelle)}")
     return f"Chemin : \"{path}\"\nTaille : {size / (1024 ** echelle):.2f}{c}o"
+
+
+LOGO_PATH = rel_path("view/images/logo.ico")
