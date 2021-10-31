@@ -38,10 +38,10 @@ class Controller:
             view.visualization.bind("<MouseWheel>", self.on_zoom)
             view.visualization.bind("<Configure>", self.on_resize)
             view.visualization.bind('<Motion>', self.on_motion)
-            view.visualization.bind('<Double-1>', lambda *_:self.on_swap())
-            view.red.trace("w", lambda *_: self.on_color)
-            view.green.trace("w", lambda *_: self.on_color)
-            view.blue.trace("w", lambda *_: self.on_color)
+            view.visualization.bind('<Double-1>', lambda *_: self.on_swap())
+            view.red.trace("w", lambda *_: self.on_color())
+            view.green.trace("w", lambda *_: self.on_color())
+            view.blue.trace("w", lambda *_: self.on_color())
         if path is not None:
             if not self.load_configuration(path):
                 self.update()
@@ -67,13 +67,6 @@ class Controller:
     def _end_export(self, path: str):
         """Show information about file."""
         showinfo("Exporter", f"Exportation réussi\n{stat_file(path)}")
-
-    # @logger
-    # def start_export(self, path: str):
-    #     size = os.path.getsize(path)
-    #     showinfo("Exporter",
-    #              "Exportation réussi\n"
-    #              + stat_file(path))
 
     @logger
     def on_export(self, data):
