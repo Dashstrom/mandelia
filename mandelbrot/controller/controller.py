@@ -36,14 +36,12 @@ class Controller:
                 "w", lambda *_: self.on_iteration_max())
 
             view.visualization.bind("<MouseWheel>", self.on_wheel)
-            view.visualization.bind("<Button-1>", self.on_right_click)
             view.visualization.bind("<Button-4>", self.on_right_click)
-            view.visualization.bind("<Button-3>", self.on_left_click)
             view.visualization.bind("<Button-5>", self.on_left_click)
             
             view.visualization.bind("<Configure>", self.on_resize)
             view.visualization.bind('<Motion>', self.on_motion)
-            view.visualization.bind ("<Button>", self.touchpad_events)
+            view.visualization.bind("<Button>", self.touchpad_events)
             view.visualization.bind('<Double-1>', lambda *_: self.on_swap())
             view.red.trace("w", lambda *_: self.on_color())
             view.green.trace("w", lambda *_: self.on_color())
@@ -209,8 +207,6 @@ class Controller:
         self.zoom(event.x, event.y, 2 if event.delta > 0 else 0.5)
     
     def on_right_click(self, event):
-        self.view.
-        print(event.__dict__)
         self.zoom(event.x, event.y, 2)
     
     def on_left_click(self, event):
@@ -220,7 +216,6 @@ class Controller:
     def zoom(self, x, y, power):
         self.manager.zoom(x, y, power)
         self.update()
-        
 
     @logger
     def on_iteration_max(self):
