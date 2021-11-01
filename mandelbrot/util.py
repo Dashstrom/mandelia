@@ -1,7 +1,6 @@
 import os
 import sys
 
-from math import log, floor
 from datetime import datetime
 from functools import wraps
 
@@ -29,25 +28,22 @@ def logger(func):
     return wrapper
 
 
-def stat_file(path: str) -> str:
+def sizeof_fmt(path: str) -> str:
     """Show information on a path."""
     size = os.path.getsize(path)
-    step = 1024 
-    if size < step:
-        c = "o"
-        echelle = step
-    elif size < size ** 2:
-        c = "k"
-        echelle = step ** 2
-    else:
-        c = "M"
-        echelle = step ** 3
-    print(f"{size}/{echelle}={size / echelle}")
-    return f"Chemin : \"{path}\"\nTaille : {size / echelle:.2f}{c}o"
+    for unit in ["", "k", "M", "G", "T", "P", "E", "Z"]:
+        if abs(size) < 1000.0:
+            return f"{size:3.1f}{unit}o"
+        size /= 1000.0
+    return f"{size:.1f}Yo"
+
+
+def stat_file(path: str) -> str:
+    """Show information on a path."""
+    return f"Chemin : \"{path}\"\nTaille : {sizeof_fmt(path)}"
 
 
 if os.name == "nt":
     LOGO_PATH = rel_path("view/images/logo.ico")
 else:
     LOGO_PATH = "@" + rel_path("view/images/logo.xbm")
-    
