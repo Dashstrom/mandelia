@@ -128,11 +128,16 @@ cdef class Fractale:
 
     cpdef resize(self, short width, short height):
         """Resize width and height, and adjust the zoom if necessary."""
-        cdef double multiplier
-        multiplier = width / self.width
+        cdef:
+            short tmp_width
+            double multiplier
+        tmp_width = self.width
         self.width = width
         self.height = height
-        self.middle_zoom(multiplier)
+        try:
+            self.middle_zoom(width / tmp_width)
+        except ZeroDivisionError:
+            pass
         self.need_update = True
 
     cpdef iterations_sum(self):
@@ -211,6 +216,9 @@ cdef class Fractale:
     cpdef zoom(self, short x, short y, double multiplier):
         """Zoom at a position in the image."""
         cdef double pixel = self.pixel_size, real = self.real, imaginary = self.imaginary
+        if -1e-09 < multiplier < 1e-09:
+            raise ZeroDivisionError(
+                f"the multiplier is too close to zero ({multiplier})")
         self.real = (real * 1 / multiplier
                      + (real + x * pixel - self.width / 2 * pixel)
                      * (1 - 1 / multiplier))
