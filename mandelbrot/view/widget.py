@@ -130,7 +130,7 @@ class Output(Labeled, VariableContainer[StringVar]):
         VariableContainer.__init__(self, StringVar(self, str(default)))
         self.sep = Label(self, text=":")
         self.output_label = Label(self, relief=SUNKEN, anchor=NW,
-                                  textvariable=self.var)
+                                  textvariable=self.var, width=25)
         self.sep.pack(side=LEFT)
         self.output_label.pack(side=LEFT, fill=X, expand=True, padx=2, pady=2)
 
