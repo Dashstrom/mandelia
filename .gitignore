@@ -6,6 +6,7 @@ __pycache__/
 mandelbrot/**/*.c
 mandelbrot/**/*.cpp
 mandelbrot/**/*.html
+mandelbrot/**/*.so
 
 # installation package
 *.egg-info/

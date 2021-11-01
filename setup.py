@@ -2,6 +2,7 @@ from setuptools.extension import Extension
 from sys import stderr
 
 import numpy as np
+import os
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
 from setuptools import setup, find_packages
@@ -20,13 +21,19 @@ include_dirs: list = [np.get_include()]
 library_dirs: list = []
 libraries: list = []
 
+if os.name == "nt":
+    extra_compile_args = extra_link_args = ["/openmp"]
+else:
+    extra_compile_args = extra_link_args = ["-fopenmp"]
+    
+
 ext = cythonize([
     Extension(
         "*",
         ["mandelbrot/model/*.pyx"],
         libraries=libraries,
-        extra_compile_args=["/openmp"],
-        # extra_link_args=['/openmp'],
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
         include_dirs=include_dirs,
         library_dirs=library_dirs
     )],
@@ -40,7 +47,7 @@ setup(
     version="1.0.1",
     author="***REMOVED*** ***REMOVED***",
     author_email='***REMOVED***.***REMOVED***@gmail.com',
-    url='https://github.com/Dashstrom/raspinel',
+    url='https://github.com/Dashstrom/Mandelbrot',
     license=read("LICENSE"),
     packages=find_packages(exclude=('tests', 'docs')),
     long_description=read("README.md"),

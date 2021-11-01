@@ -35,9 +35,15 @@ class Controller:
             interaction.iteration.max.var.trace(
                 "w", lambda *_: self.on_iteration_max())
 
-            view.visualization.bind("<MouseWheel>", self.on_zoom)
+            view.visualization.bind("<MouseWheel>", self.on_wheel)
+            view.visualization.bind("<Button-1>", self.on_right_click)
+            view.visualization.bind("<Button-4>", self.on_right_click)
+            view.visualization.bind("<Button-3>", self.on_left_click)
+            view.visualization.bind("<Button-5>", self.on_left_click)
+            
             view.visualization.bind("<Configure>", self.on_resize)
             view.visualization.bind('<Motion>', self.on_motion)
+            view.visualization.bind ("<Button>", self.touchpad_events)
             view.visualization.bind('<Double-1>', lambda *_: self.on_swap())
             view.red.trace("w", lambda *_: self.on_color())
             view.green.trace("w", lambda *_: self.on_color())
@@ -53,6 +59,15 @@ class Controller:
         """Represent a Controller."""
         name = self.__class__.__name__
         return f"<{name} locked_update={self.locked_update}>"
+    
+    def touchpad_events(self, event):
+        print(event)
+        if event.num==4:
+            self.xview_scroll(-10, "units")
+            return "break"
+        elif event.num==5:
+            self.xview_scroll(10, "units")
+            return "break"
 
     @logger
     def on_swap(self):
@@ -118,7 +133,8 @@ class Controller:
                          loop=0, palette=Image.ADAPTIVE, disposal=1)
                 self._end_export(data["path"])
             else:
-                video = cv2.VideoWriter(data["path"], -1, data["fps"],
+                codec = cv2.VideoWriter_fourcc(*'mp4v')
+                video = cv2.VideoWriter(data["path"], codec, data["fps"],
                                         (width, height))
                 video.write(cv2.cvtColor(np.array(img),  # type: ignore
                                          cv2.COLOR_RGB2BGR))
@@ -188,11 +204,23 @@ class Controller:
                           "Une erreur est survenue")
                 print_exc()
 
-    @logger
-    def on_zoom(self, event):
+    def on_wheel(self, event):
         """Handle wheel bearing for zoom."""
-        self.manager.zoom(event.x, event.y, 2 if event.delta > 0 else 0.5)
+        self.zoom(event.x, event.y, 2 if event.delta > 0 else 0.5)
+    
+    def on_right_click(self, event):
+        self.view.
+        print(event.__dict__)
+        self.zoom(event.x, event.y, 2)
+    
+    def on_left_click(self, event):
+        self.zoom(event.x, event.y, 0.5)
+
+    @logger
+    def zoom(self, x, y, power):
+        self.manager.zoom(x, y, power)
         self.update()
+        
 
     @logger
     def on_iteration_max(self):
