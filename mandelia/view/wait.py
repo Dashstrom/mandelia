@@ -6,7 +6,7 @@ from typing import Optional
 
 from PIL import Image, ImageTk
 
-from ..util import LOGO_PATH
+from ..util import set_icon
 
 
 class Wait(tk.Toplevel):
@@ -19,11 +19,7 @@ class Wait(tk.Toplevel):
         self.root = view
         self.configure()
         self.geometry("300x300")
-        try:
-            self.iconbitmap(LOGO_PATH)
-        except Exception as err:
-            print(err)
-
+        set_icon(self)
         self.__image: Optional[Image.Image] = None
         self.__image_tk: Optional[ImageTk.PhotoImage] = None
         self.__index: Optional[int] = None

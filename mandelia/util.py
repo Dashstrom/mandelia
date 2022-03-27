@@ -3,6 +3,9 @@ import sys
 
 from datetime import datetime
 from functools import wraps
+from typing import Union
+
+import tkinter as tk
 
 
 def rel_path(relative_path: str) -> str:
@@ -43,7 +46,12 @@ def stat_file(path: str) -> str:
     return f"Chemin : \"{path}\"\nTaille : {sizeof_fmt(path)}"
 
 
-if os.name == "nt":
-    LOGO_PATH = rel_path("view/images/logo.ico")
-else:
-    LOGO_PATH = "@" + rel_path("view/images/logo.xbm")
+def set_icon(self: Union[tk.Toplevel, tk.Misc]) -> bool:
+    """Set icon on tk.Misc or tk.TopLevel?"""
+    try:
+        icon = tk.PhotoImage(file=rel_path("view/images/logo.png"))
+        self.tk.call("wm", "iconphoto", self._w, icon)  # type: ignore
+        return True
+    except Exception as err:
+        print(err)
+        return False

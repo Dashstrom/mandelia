@@ -1,4 +1,4 @@
-from tkinter import LabelFrame, Misc, Button, Frame, Canvas, Tk
+import tkinter as tk
 from tkinter.constants import NW, X, Y, BOTH, TRUE, W, LEFT
 from typing import Optional
 
@@ -6,47 +6,47 @@ from PIL import Image, ImageTk
 
 from .export import Export
 from .widget import AdjustableInput, Output
-from ..util import LOGO_PATH
+from ..util import set_icon
 
 
-class StateInteraction(LabelFrame):
+class StateInteraction(tk.LabelFrame):
     """Interaction for state."""
-    def __init__(self, master: Optional[Misc]) -> None:
+    def __init__(self, master: Optional[tk.Misc]) -> None:
         """Instantiate StateInteraction."""
         super().__init__(master, text="Options", labelanchor=NW)
 
-        self.actualization = Button(self, text="Actualiser")
-        self.reset = Button(self, text="Réinitialiser")
+        self.actualization = tk.Button(self, text="Actualiser")
+        self.reset = tk.Button(self, text="Réinitialiser")
 
         self.actualization.pack(pady=5, fill=X, padx=20)
         self.reset.pack(pady=5, fill=X, padx=20)
 
 
-class FileInteraction(LabelFrame):
+class FileInteraction(tk.LabelFrame):
     """Interaction for file."""
-    def __init__(self, master: Optional[Misc]) -> None:
+    def __init__(self, master: Optional[tk.Misc]) -> None:
         """Instantiate StateInteraction."""
         super().__init__(master, text="Fichier", labelanchor=NW)
 
-        self.load = Button(self, text="Charger")
-        self.save = Button(self, text="Enregistrer")
-        self.export = Button(self, text="Exporter")
+        self.load = tk.Button(self, text="Charger")
+        self.save = tk.Button(self, text="Enregistrer")
+        self.export = tk.Button(self, text="Exporter")
 
         self.load.pack(pady=5, fill=X, padx=20)
         self.save.pack(pady=5, fill=X, padx=20)
         self.export.pack(pady=5, fill=X, padx=20)
 
 
-class ColorInteraction(LabelFrame):
+class ColorInteraction(tk.LabelFrame):
     """Interaction for color."""
-    def __init__(self, master: Optional[Misc]) -> None:
+    def __init__(self, master: Optional[tk.Misc]) -> None:
         """Instantiate ColorInteraction."""
         super().__init__(master, text="Couleur", labelanchor=NW)
 
         self.red = AdjustableInput(self, "Rouge", 0, 3, 20)
         self.green = AdjustableInput(self, "Vert", 0, 1, 20)
         self.blue = AdjustableInput(self, "Bleu", 0, 10, 20)
-        self.button = Button(self, text="Surprends-moi (⁄ ⁄•⁄ω⁄•⁄ ⁄)")
+        self.button = tk.Button(self, text="Surprends-moi (⁄ ⁄•⁄ω⁄•⁄ ⁄)")
 
         self.red.pack(anchor=W, fill=X)
         self.green.pack(anchor=W, fill=X)
@@ -54,9 +54,9 @@ class ColorInteraction(LabelFrame):
         self.button.pack(pady=5, fill=X, padx=20)
 
 
-class IterationInteraction(LabelFrame):
+class IterationInteraction(tk.LabelFrame):
     """Interaction for iteration."""
-    def __init__(self, master: Optional[Misc]) -> None:
+    def __init__(self, master: Optional[tk.Misc]) -> None:
         """Instantiate IterationInteraction."""
         super().__init__(master, text="Iterations", labelanchor=NW)
 
@@ -69,9 +69,9 @@ class IterationInteraction(LabelFrame):
         self.per_pixel.pack(anchor=W, fill=X)
 
 
-class PositioningInteraction(LabelFrame):
+class PositioningInteraction(tk.LabelFrame):
     """Interaction for positioning."""
-    def __init__(self, master: Optional[Misc]) -> None:
+    def __init__(self, master: Optional[tk.Misc]) -> None:
         """Instantiate PositioningInteraction."""
         super().__init__(master, text="Positionnement", labelanchor=NW)
 
@@ -84,9 +84,9 @@ class PositioningInteraction(LabelFrame):
         self.imaginary.pack(anchor=W, fill=X)
 
 
-class MainInteraction(Frame):
+class MainInteraction(tk.Frame):
     """Manage all interaction."""
-    def __init__(self, master: Optional[Misc]) -> None:
+    def __init__(self, master: Optional[tk.Misc]) -> None:
         """Instantiate MainInteraction."""
         super().__init__(master)
         self._export_callback = None
@@ -115,7 +115,7 @@ class MainInteraction(Frame):
             self._export_callback(export.data)
 
 
-class View(Tk):
+class View(tk.Tk):
     """Main view."""
     def __init__(self) -> None:
         """Instantiate View."""
@@ -133,13 +133,9 @@ class View(Tk):
         self.active = True
         self.__index: Optional[int] = None
         self.__index2: Optional[int] = None
-        try:
-            self.iconbitmap(LOGO_PATH)
-        except Exception as err:
-            print(err)
-
-        self.visualization = Canvas(self, width=600, height=600, bd=0,
-                                    highlightthickness=0, bg="black")
+        set_icon(self)
+        self.visualization = tk.Canvas(self, width=600, height=600, bd=0,
+                                       highlightthickness=0, bg="black")
         self.interaction = MainInteraction(self)
         self.interaction.pack(side=LEFT, fill=Y)
         self.visualization.pack(fill=BOTH, expand=TRUE)

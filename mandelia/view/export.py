@@ -4,7 +4,7 @@ from tkinter.filedialog import asksaveasfilename
 from typing import Any, Dict, Optional
 
 from .widget import AdjustableInput
-from ..util import LOGO_PATH
+from ..util import set_icon
 
 
 class Export(tk.Toplevel):
@@ -17,10 +17,7 @@ class Export(tk.Toplevel):
         self.root = view
         self.configure()
         self.geometry("300x300")
-        try:
-            self.iconbitmap(LOGO_PATH)
-        except Exception as err:
-            print(err)
+        set_icon(self)
         self.data: Dict[str, Any] = {}
         self.format = tk.LabelFrame(self, text="Format", labelanchor=NW)
         values = ['PNG', 'GIF', 'MP4']

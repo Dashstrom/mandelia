@@ -11,6 +11,7 @@ Application to visualize the fractal of mandelbrot and julia.
 
 ```sh
 git clone https://github.com/Dashstrom/mandelia.git
+cd mandelia
 pip install .
 python3 -m mandelia
 ```
@@ -19,6 +20,7 @@ python3 -m mandelia
 
 ```sh
 git clone https://github.com/Dashstrom/mandelia.git
+cd mandelia
 py setup.py exe
 .\dist\Mandelia.exe
 ```
