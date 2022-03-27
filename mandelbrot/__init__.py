@@ -1,6 +1,6 @@
 __all__ = [
     "logger",
-    "call",
+    "rel_path",
     "stat_file",
     "Controller",
     "Export",
@@ -24,7 +24,6 @@ __version__ = "1.0.1"
 __author__ = "***REMOVED*** ***REMOVED***"
 
 from .controller import Controller
-
 
 from .view import (
     Export,

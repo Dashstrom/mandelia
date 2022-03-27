@@ -2,11 +2,18 @@
 
 Application to visualize the fractal of mandelbrot and julia.
 
-```
-yay -S tk
-py setup.py build_ext --inplace
+## Windows
 
-rm -rf "mandelbrot/model/mandelbrot"
-rm rf "build"
-py -m mandelbrot
+```sh
+git clone https://github.com/Dashstrom/Mandelbrot.git
+py setup.py exe
+.\dist\Mandelbrot.exe
+```
+
+## Linux
+
+```sh
+git clone https://github.com/Dashstrom/Mandelbrot.git
+pip install .
+python3 -m mandelbrot
 ```

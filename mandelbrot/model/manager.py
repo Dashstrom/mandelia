@@ -1,3 +1,5 @@
+from typing import Optional, Callable
+
 from PIL import Image
 
 from .fractale import (
@@ -8,6 +10,7 @@ from .fractale import (
 )
 
 RATIO = 3
+ProgressHandler = Callable[[float, Image.Image], None]
 
 
 class FractaleManager:
@@ -32,6 +35,14 @@ class FractaleManager:
     def images(self) -> tuple[Image.Image, Image.Image]:
         """Return 2 fractals docs."""
         return self.first.image(), self.second.image()
+
+    def drop(
+            self,
+            metadata: dict,
+            handler_progress: Optional[ProgressHandler] = None
+    ) -> None:
+        # TODO better type
+        return self.first.drop(metadata, handler_progress)
 
     def swap(self) -> None:
         """Swap first with the second fractal."""
@@ -67,11 +78,11 @@ class FractaleManager:
     def load(self, path: str) -> None:
         """Load fractals from path."""
         try:
-            with open(path, "rb") as path:
-                data = path.read(self.save_size() + 1)
+            with open(path, "rb") as file:
+                data = file.read(self.save_size() + 1)
         except FileNotFoundError:
             raise FileNotFoundError(
-                f"Le fichier {path!r} n'a pas pu être trouvé")
+                f"Le fichier {path!r} n'a pas pu être trouvé") from None
         self.from_bytes(data)
 
     def from_bytes(self, data: bytes):

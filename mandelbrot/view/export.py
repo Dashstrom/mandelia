@@ -1,4 +1,5 @@
-from tkinter import *
+import tkinter as tk
+from tkinter.constants import NW, X, LEFT, FALSE
 from tkinter.filedialog import asksaveasfilename
 from typing import Any, Dict, Optional
 
@@ -6,9 +7,9 @@ from .widget import AdjustableInput
 from ..util import LOGO_PATH
 
 
-class Export(Toplevel):
+class Export(tk.Toplevel):
     """Widget for ask export configuration to user."""
-    def __init__(self, view: Optional[Misc]) -> None:
+    def __init__(self, view: Optional[tk.Misc]) -> None:
         """Instantiate Export."""
         super().__init__(view)
         self.resizable(width=False, height=False)
@@ -21,22 +22,22 @@ class Export(Toplevel):
         except Exception as err:
             print(err)
         self.data: Dict[str, Any] = {}
-        self.format = LabelFrame(self, text="Format", labelanchor=NW)
+        self.format = tk.LabelFrame(self, text="Format", labelanchor=NW)
         values = ['PNG', 'GIF', 'MP4']
-        self.format_var = StringVar(self, values[0])
+        self.format_var = tk.StringVar(self, values[0])
         self.formats = {}
         for val in values:
-            self.formats[val] = Radiobutton(self.format, text=val, width=9,
-                                            indicatoron=FALSE, value=val,
-                                            variable=self.format_var)
-        self.details = LabelFrame(self, text="Détails", labelanchor=NW)
+            self.formats[val] = tk.Radiobutton(self.format, text=val, width=9,
+                                               indicatoron=FALSE, value=val,
+                                               variable=self.format_var)
+        self.details = tk.LabelFrame(self, text="Détails", labelanchor=NW)
         self.fps = AdjustableInput(self.details, "FPS", 5, 24, 60)
         self.width = AdjustableInput(self.details, "Largeur", 128, 1920, 3840)
         self.height = AdjustableInput(self.details, "Hauteur", 128, 1080, 3840)
         self.compression = AdjustableInput(self.details, "Compression",
-                                           10, 95, 100)
+                                           10, 85, 100)
         self.speed = AdjustableInput(self.details, "Vitesse", 5, 10, 50)
-        self.button = Button(self, text="Terminer", command=self.terminate)
+        self.button = tk.Button(self, text="Terminer", command=self.terminate)
 
         self.format_var.trace("w", lambda *_: self.on_disable_useless())
         self.on_disable_useless()
@@ -63,9 +64,11 @@ class Export(Toplevel):
         if fmt == "PNG":
             self.speed.disable()
             self.fps.disable()
+            self.compression.enable()
         else:
             self.speed.enable()
             self.fps.enable()
+            self.compression.disable()
 
     def terminate(self):
         """End of export."""

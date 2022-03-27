@@ -2,7 +2,8 @@
 
 import numpy as np
 import struct as s
-
+import cv2
+from math import log
 from PIL import Image
 
 cimport numpy as np
@@ -22,10 +23,7 @@ DEF MIN_PIXEL_SIZE = PIXEL_DEFAULT * 16
 
 cdef unsigned int iterate(double z_r, double z_i, double c_r, double c_i,
                           unsigned int iterations) nogil except +:
-    """
-    Iterate on a complex numbers.
-    formula: Zn+1 = Zn ** 2 + C
-    """
+    """Iterate on a complex numbers. formula: Zn+1 = Zn ** 2 + C"""
     cdef:
         double tmp
         unsigned int i
@@ -44,7 +42,7 @@ cdef class ModuloColoration:
     cdef:
         public unsigned char r, g, b
 
-    def __init__(self, r, g, b):
+    def __init__(self, r=3, g=1, b=10):
         self.r, self.g, self.b = r, g, b
 
     cpdef to_bytes(self):
@@ -91,8 +89,8 @@ cdef class Fractale:
         content
         ModuloColoration color
 
-    def __init__(self, ModuloColoration color, real=0, imaginary=0,
-                 iterations=1_000, width=48, height=48,
+    def __init__(self, ModuloColoration color, real=0.0, imaginary=0.0,
+                 iterations=1_000, width=256, height=256,
                  pixel_size=PIXEL_DEFAULT):
         self.content = np.zeros((width, height), dtype=DTYPE)
         self.color = color
@@ -103,6 +101,69 @@ cdef class Fractale:
         self.height = height
         self.pixel_size = pixel_size
         self.need_update = True
+
+    def __copy__(self):
+        data = self.to_bytes()
+        color = type(self.color)()
+        frac = type(self)(color)
+        frac.from_bytes(data)
+        return frac
+
+    def drop(self, metadata, handler_progress = None):
+        # TODO safe check
+        if handler_progress is None:
+            handler_progress = lambda *args, **kwargs: None
+        path: str = metadata["path"]
+        ext: str = metadata.get("ext", path.lower().rsplit(".", 1)[-1])
+        width, height = metadata["width"], metadata["height"]
+        compression = metadata["compression"]
+        fractale = self.__copy__()
+        open(metadata["path"], "a").close()  # test writable
+        if ext in ("png", "pns", "jpeg", "jpe", "jpeg"):
+            img: Image.Image = fractale.image_at_size(width, height)
+            img.save(path, quality=compression)
+            handler_progress(1, img)
+        elif ext in ("gif", "mp4"):
+            pixel_size = fractale.pixel_size
+            speed = metadata["speed"] / 10
+            fractale.top()
+            fractale.resize(width, height)
+            img = fractale.image()
+            handler_progress(0, img)
+            fps = metadata["fps"]
+            multi = 1 + speed / fps
+            start_pixel_size = fractale.pixel_size
+            s = log(start_pixel_size, multi)
+            e = log(pixel_size, multi)
+
+            def iterate_images():
+                progression = 0
+                yield fractale.image()
+                while fractale.pixel_size > pixel_size:
+                    fractale.middle_zoom(multi)
+                    p = log(fractale.pixel_size, multi)
+                    progression = max(0, min(((p - s) / (e - s), 1)))
+                    print(f"{progression * 100:.2f}%")
+                    img = fractale.image()
+                    handler_progress(progression, img)
+                    yield img
+                if progression != 1:
+                    handler_progress(1, fractale.image())
+
+            if ext == "gif":
+                img.save(metadata["path"], fromat='GIF', save_all=True,
+                         append_images=list(iterate_images()),
+                         optimize=True, duration=int(1000 / fps),
+                         loop=0, palette=Image.ADAPTIVE, disposal=1)
+            else:
+                codec = cv2.VideoWriter_fourcc(*'mp4v')
+                video = cv2.VideoWriter(path, codec, fps, (width, height))
+                video.write(cv2.cvtColor(np.array(img),  # type: ignore
+                                         cv2.COLOR_RGB2BGR))
+                for frame in iterate_images():
+                    video.write(cv2.cvtColor(np.array(frame),  # type: ignore
+                                             cv2.COLOR_RGB2BGR))
+                video.release()
 
     def __str__(self):
         return self.__repr__()
@@ -205,9 +266,10 @@ cdef class Fractale:
 
     cpdef top(self):
         """Set pixel at default size."""
-        if self.pixel_size != PIXEL_DEFAULT:
-            self.pixel_size = PIXEL_DEFAULT
-            self.need_update = True
+        w, h = self.width, self.height
+        self.resize(256, 256)
+        self.pixel_size = PIXEL_DEFAULT
+        self.resize(w, h)
 
     cpdef middle_zoom(self, double multiplier):
         """Zoom at the middle."""

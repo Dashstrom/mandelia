@@ -1,16 +1,17 @@
 from abc import ABC
-from tkinter import *
+import tkinter as tk
+from tkinter.constants import LEFT, NW, HORIZONTAL, FALSE, X, SUNKEN
 from typing import Any, Generic, Optional, TypeVar
 
-T = TypeVar("T", StringVar, IntVar, DoubleVar, BooleanVar)
+T = TypeVar("T", tk.StringVar, tk.IntVar, tk.DoubleVar, tk.BooleanVar)
 
 
-class Labeled(Frame, ABC):
+class Labeled(tk.Frame, ABC):
     """Label for another widget."""
-    def __init__(self, master: Optional[Misc], text: str) -> None:
+    def __init__(self, master: Optional[tk.Misc], text: str) -> None:
         """Instantiate Labeled."""
         super().__init__(master)
-        self.label = Label(self, text=text, width=10, anchor=NW)
+        self.label = tk.Label(self, text=text, width=10, anchor=NW)
         self.label.pack(side=LEFT)
 
 
@@ -26,23 +27,23 @@ class VariableContainer(Generic[T]):
         return self.__var
 
 
-class AdjustableInput(Labeled, VariableContainer[DoubleVar]):
+class AdjustableInput(Labeled, VariableContainer[tk.DoubleVar]):
     """Widget to have a variable with a scale and an entry."""
-    def __init__(self, master: Optional[Misc], text: str, min_: int,
+    def __init__(self, master: Optional[tk.Misc], text: str, min_: int,
                  default: int, max_: int, entry_width: int = 6) -> None:
         """Instantiate AdjustableInput."""
         Labeled.__init__(self, master, text)
-        VariableContainer.__init__(self, DoubleVar(self, float(default)))
+        VariableContainer.__init__(self, tk.DoubleVar(self, float(default)))
         self.min = min_
         self.max = max_
         self.default = default
         self.__error = False
-        self.entry_var = StringVar(self, str(self.default))
-        self.scale = Scale(self, from_=self.min, to=self.max, sliderlength=30,
-                           orient=HORIZONTAL, variable=self.var,
-                           showvalue=FALSE)
-        self.entry = Entry(self, width=entry_width,
-                           textvariable=self.entry_var)
+        self.entry_var = tk.StringVar(self, str(self.default))
+        self.scale = tk.Scale(self, from_=self.min, to=self.max,
+                              sliderlength=30, orient=HORIZONTAL,
+                              variable=self.var, showvalue=FALSE)
+        self.entry = tk.Entry(self, width=entry_width,
+                              textvariable=self.entry_var)
         self.scale.pack(side=LEFT, fill=X, expand=True)
         self.entry.pack(side=LEFT, padx=3)
         self.entry_var.trace("w", self.on_update_scale)
@@ -121,27 +122,27 @@ class AdjustableInput(Labeled, VariableContainer[DoubleVar]):
             self.on_update_entry(self)
 
 
-class Output(Labeled, VariableContainer[StringVar]):
+class Output(Labeled, VariableContainer[tk.StringVar]):
     """Read-Only Entry."""
-    def __init__(self, master: Optional[Misc],
+    def __init__(self, master: Optional[tk.Misc],
                  text: str, default: Any) -> None:
         """Instantiate Output."""
         Labeled.__init__(self, master, text)
-        VariableContainer.__init__(self, StringVar(self, str(default)))
-        self.sep = Label(self, text=":")
-        self.output_label = Label(self, relief=SUNKEN, anchor=NW,
-                                  textvariable=self.var, width=25)
+        VariableContainer.__init__(self, tk.StringVar(self, str(default)))
+        self.sep = tk.Label(self, text=":")
+        self.output_label = tk.Label(self, relief=SUNKEN, anchor=NW,
+                                     textvariable=self.var, width=25)
         self.sep.pack(side=LEFT)
         self.output_label.pack(side=LEFT, fill=X, expand=True, padx=2, pady=2)
 
 
-class InputOutput(Labeled, VariableContainer[StringVar]):
+class InputOutput(Labeled, VariableContainer[tk.StringVar]):
     """Writable Entry."""
-    def __init__(self, master: Optional[Misc], text, default: Any) -> None:
+    def __init__(self, master: Optional[tk.Misc], text, default: Any) -> None:
         """Instantiate InputOutput."""
         Labeled.__init__(self, master, text)
-        VariableContainer.__init__(self, StringVar(self, str(default)))
-        self.sep = Label(self, text=":")
-        self.entry = Entry(self, textvariable=self.var, width=32)
+        VariableContainer.__init__(self, tk.StringVar(self, str(default)))
+        self.sep = tk.Label(self, text=":")
+        self.entry = tk.Entry(self, textvariable=self.var, width=32)
         self.sep.pack(side=LEFT)
         self.entry.pack(side=LEFT, fill=X, padx=3)

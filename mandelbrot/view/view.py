@@ -13,7 +13,7 @@ class StateInteraction(LabelFrame):
     """Interaction for state."""
     def __init__(self, master: Optional[Misc]) -> None:
         """Instantiate StateInteraction."""
-        super().__init__(master, text="StateInteraction", labelanchor=NW)
+        super().__init__(master, text="Options", labelanchor=NW)
 
         self.actualization = Button(self, text="Actualiser")
         self.reset = Button(self, text="Réinitialiser")
@@ -58,7 +58,7 @@ class IterationInteraction(LabelFrame):
     """Interaction for iteration."""
     def __init__(self, master: Optional[Misc]) -> None:
         """Instantiate IterationInteraction."""
-        super().__init__(master, text="IterationInteraction", labelanchor=NW)
+        super().__init__(master, text="Iterations", labelanchor=NW)
 
         self.max = AdjustableInput(self, "Max", 100, 2_000, 10_000)
         self.sum = Output(self, "Total", 0)
@@ -126,13 +126,13 @@ class View(Tk):
         self.minsize(800, 620)
         self.geometry("800x620")
         self._export_callback = None
-        self.__image = None
-        self.__image_tk = None
-        self.__image2 = None
-        self.__image_tk2 = None
+        self.__image: Optional[Image.Image] = None
+        self.__image_tk: Optional[ImageTk.PhotoImage] = None
+        self.__image2: Optional[Image.Image] = None
+        self.__image_tk2: Optional[ImageTk.PhotoImage] = None
         self.active = True
-        self.__index = None
-        self.__index2 = None
+        self.__index: Optional[int] = None
+        self.__index2: Optional[int] = None
         try:
             self.iconbitmap(LOGO_PATH)
         except Exception as err:

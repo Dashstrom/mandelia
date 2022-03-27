@@ -1,6 +1,7 @@
 from math import ceil
-from tkinter import *
-from tkinter.ttk import Progressbar
+import tkinter as tk
+from tkinter import ttk
+from tkinter.constants import NW, X, HORIZONTAL, BOTTOM
 from typing import Optional
 
 from PIL import Image, ImageTk
@@ -8,9 +9,9 @@ from PIL import Image, ImageTk
 from ..util import LOGO_PATH
 
 
-class Wait(Toplevel):
+class Wait(tk.Toplevel):
     """Window for preview."""
-    def __init__(self, view: Optional[Misc]) -> None:
+    def __init__(self, view: tk.Misc) -> None:
         """Instantiate preview window."""
         super().__init__(view)
         self.resizable(width=False, height=False)
@@ -23,35 +24,38 @@ class Wait(Toplevel):
         except Exception as err:
             print(err)
 
-        self.__image = None
-        self.__image_tk = None
-        self.__index = None
-        self.var = IntVar(self, 0)
+        self.__image: Optional[Image.Image] = None
+        self.__image_tk: Optional[ImageTk.PhotoImage] = None
+        self.__index: Optional[int] = None
+        self.var = tk.IntVar(self, 0)
 
-        self.label = Label(self, text="Une opération lente est en cours")
-        self.canvas = Canvas(self, width=200, height=200, bd=0,
-                             highlightthickness=0, bg="#c8c8c8")
-        self.progressbar = Progressbar(self, variable=self.var,
-                                       orient=HORIZONTAL, value=0, maximum=100)
-        self.ok = Button(self, text="Done bitch")
+        self.label = tk.Label(self, text="Une opération lente est en cours")
+        self.canvas = tk.Canvas(self, width=200, height=200, bd=0,
+                                highlightthickness=0, bg="#c8c8c8")
+        self.progressbar = ttk.Progressbar(
+            self, variable=self.var, orient=HORIZONTAL, value=0, maximum=100
+        )
+        self.cancel = tk.Button(self, text="Annuler",
+                                command=self.destroy, width=20)
 
         self.label.pack(fill=X, padx=20)
         self.canvas.pack()
         self.progressbar.pack(fill=X, side=BOTTOM)
-        self.ok.pack(padx=20)
+        self.cancel.pack(pady=10)
 
-        self.take_control()
+        # self.take_control()
 
     def done(self):
         """Alias for destroy."""
         self.destroy()
+        self.update()
 
     def set_preview(self, image: Image.Image):
         """Set image to preview."""
         w, h = image.size
         ratio_w = w / 200
-        ratin_h = h / 200
-        ratio = max(ratin_h, ratio_w)
+        ratio_h = h / 200
+        ratio = max(ratio_h, ratio_w)
         img_w = ceil(w / ratio)
         img_h = ceil(h / ratio)
         self.__image = image.resize((img_w, img_h))
@@ -61,17 +65,10 @@ class Wait(Toplevel):
         self.__index = self.canvas.create_image(
             100 - img_w / 2, 100 - img_h / 2, image=self.__image_tk, anchor=NW)
         self.canvas.tag_lower(self.__index)
-        self.update_idletasks()
+        self.update()
 
     def progress(self, percent: float) -> None:
         """Update progress bar."""
         if ceil(percent * 100) != self.var.get():
             self.var.set(ceil(percent * 100))
             self.root.update()
-            self.root.update_idletasks()
-
-    def take_control(self) -> None:
-        """Take control on main window."""
-        self.transient(self.root)
-        self.grab_set()
-        # self.root.wait_window(self)

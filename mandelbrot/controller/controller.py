@@ -1,13 +1,9 @@
 from contextlib import contextmanager
-from math import log
 from random import randint
+from tkinter import TclError
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from tkinter.messagebox import showerror, showinfo
 from traceback import print_exc
-
-import cv2
-import numpy as np
-from PIL import Image
 
 from ..model.manager import FractaleManager
 from ..view.view import View
@@ -17,6 +13,7 @@ from ..util import logger, stat_file
 
 class Controller:
     """General controller."""
+
     def __init__(self, path: str = None) -> None:
         """Instantiate Controller."""
         with self.lock_update():
@@ -24,9 +21,11 @@ class Controller:
             view.update()
             self.manager = FractaleManager(view.width, view.height)
             self.__ignore_update = False
+            self.__wait = None
 
             interaction = view.interaction
-            interaction.action.actualization.config(command=self.on_actualization)
+            interaction.action.actualization.config(
+                command=self.on_actualization)
             interaction.color.button.config(command=self.on_random_color)
             interaction.action.reset.config(command=self.on_reset)
             interaction.file.save.config(command=self.on_save)
@@ -38,10 +37,9 @@ class Controller:
             view.visualization.bind("<MouseWheel>", self.on_wheel)
             view.visualization.bind("<Button-4>", self.on_right_click)
             view.visualization.bind("<Button-5>", self.on_left_click)
-            
+
             view.visualization.bind("<Configure>", self.on_resize)
             view.visualization.bind('<Motion>', self.on_motion)
-            view.visualization.bind("<Button>", self.touchpad_events)
             view.visualization.bind('<Double-1>', lambda *_: self.on_swap())
             view.red.trace("w", lambda *_: self.on_color())
             view.green.trace("w", lambda *_: self.on_color())
@@ -57,15 +55,6 @@ class Controller:
         """Represent a Controller."""
         name = self.__class__.__name__
         return f"<{name} locked_update={self.locked_update}>"
-    
-    def touchpad_events(self, event):
-        print(event)
-        if event.num==4:
-            self.xview_scroll(-10, "units")
-            return "break"
-        elif event.num==5:
-            self.xview_scroll(10, "units")
-            return "break"
 
     @logger
     def on_swap(self):
@@ -84,65 +73,35 @@ class Controller:
     @logger
     def on_export(self, data):
         """Handle export."""
-        print(data)
-        p: str = data["path"].lower()
-        width, height = data["width"], data["height"]
-        fractale = self.manager.first
-        try:
-            open(data["path"], "a")
-        except OSError:
-            print("invalid path")
+        if self.__wait is not None:
+            showerror("Opération en cours",
+                      "Un export est déjà en cours, "
+                      "veuillez la fermer pour exporter de nouveau")
             return
-        if p.endswith((".png", ".pns", ".jpeg", ".jpe", ".jpeg")):
-            img: Image.Image = fractale.image_at_size(width, height)
-            img.save(data["path"], quality=data["compression"])
-            self._end_export(data["path"])
-        elif p.endswith((".gif", ".mp4")):
-            wait = Wait(self.view)
-            data_frac = fractale.to_bytes()
-            pixel_size = fractale.pixel_size
-            speed = data["speed"] / 10
-            fractale.top()
-            fractale.resize(width, height)
-            img = fractale.image()
-            wait.set_preview(img)
-            multi = 1 + speed / data["fps"]
+        path: str = data["path"]
+        ext = data["ext"] = path.lower().rsplit(".", 1)[-1]
+        if ext in ("gif", "mp4"):
+            wait = self.__wait = Wait(self.view)
 
-            print("zoom of :", multi)
-            start_pixel_size = fractale.pixel_size
-            s = log(start_pixel_size, multi)
-            e = log(pixel_size, multi)
+            def handler_progress(progress, image):
+                print(progress)
+                wait.progress(progress)
+                wait.set_preview(image)
+                if progress == 1:
+                    wait.done()
+                self.view.update()
+        else:
+            handler_progress = None
 
-            def iterate_images():
-                while fractale.pixel_size > pixel_size:
-                    fractale.middle_zoom(multi)
-                    p = log(fractale.pixel_size, multi)
-                    prog = (p - s) / (e - s)
-                    wait.progress(max(0.0, min(prog, 1.0)))
-                    print(f"({p} - {s}) / ({e} - {s}) = {prog}")
-                    img = fractale.image()
-                    wait.set_preview(img)
-                    yield img
-
-            if p.endswith(".gif"):
-                img.save(data["path"], fromat='GIF', save_all=True,
-                         append_images=list(iterate_images()),
-                         optimize=True, duration=int(1000 / data["fps"]),
-                         loop=0, palette=Image.ADAPTIVE, disposal=1)
-                self._end_export(data["path"])
-            else:
-                codec = cv2.VideoWriter_fourcc(*'mp4v')
-                video = cv2.VideoWriter(data["path"], codec, data["fps"],
-                                        (width, height))
-                video.write(cv2.cvtColor(np.array(img),  # type: ignore
-                                         cv2.COLOR_RGB2BGR))
-                for frame in iterate_images():
-                    video.write(cv2.cvtColor(np.array(frame),  # type: ignore
-                                             cv2.COLOR_RGB2BGR))
-                video.release()
-                self._end_export(data["path"])
-            fractale.resize(self.view.width, self.view.height)
-            fractale.from_bytes(data_frac)
+        try:
+            self.manager.drop(data, handler_progress)
+            self._end_export(path)
+        except TclError:
+            showerror("Opération annulée", "L'opération a été annulée")
+        finally:
+            self.__wait = None
+        # TODO lock 2 export at the same time
+        self.view.update()
 
     def on_motion(self, event):
         """Handle mouse movement."""
@@ -192,8 +151,7 @@ class Controller:
             try:
                 self.manager.save(path)
                 showinfo("Enregistrer la configuration",
-                         "Enregistrement réussi\n"
-                         + stat_file(path))
+                         "Enregistrement réussi\n" + stat_file(path))
             except PermissionError:
                 showerror("Enregistrer la configuration",
                           "Le fichier n'a pas pu être ouvert")
@@ -205,10 +163,10 @@ class Controller:
     def on_wheel(self, event):
         """Handle wheel bearing for zoom."""
         self.zoom(event.x, event.y, 2 if event.delta > 0 else 0.5)
-    
+
     def on_right_click(self, event):
         self.zoom(event.x, event.y, 2)
-    
+
     def on_left_click(self, event):
         self.zoom(event.x, event.y, 0.5)
 
@@ -249,7 +207,8 @@ class Controller:
             interaction.positioning.zoom.var.set(manager.pixel_size)
             interaction.iteration.max.var.set(manager.iterations)
             interaction.iteration.sum.var.set(f"{manager.iter_sum} i")
-            interaction.iteration.per_pixel.var.set(f"{manager.iter_pixel:.2f} i/pxl")
+            interaction.iteration.per_pixel.var.set(
+                f"{manager.iter_pixel:.2f} i/pxl")
             img = manager.first.image()
             self.view.set_image(img)
 
