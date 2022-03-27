@@ -100,6 +100,7 @@ setup(
     license="GPL-3.0 License",
     packages=find_packages(exclude=('tests', 'docs')),
     long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     description=('Application to visualize '
                  'the fractal of Mandelbrot and julia.'),
     cmdclass={

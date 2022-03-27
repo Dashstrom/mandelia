@@ -143,7 +143,7 @@ cdef class Fractale:
                     fractale.middle_zoom(multi)
                     p = log(fractale.pixel_size, multi)
                     progression = max(0, min(((p - s) / (e - s), 1)))
-                    print(f"{progression * 100:.2f}%")
+                    print(f"Progress : {progression * 100:.2f}%")
                     img = fractale.image()
                     handler_progress(progression, img)
                     yield img

@@ -84,7 +84,6 @@ class Controller:
             wait = self.__wait = Wait(self.view)
 
             def handler_progress(progress, image):
-                print(progress)
                 wait.progress(progress)
                 wait.set_preview(image)
                 if progress == 1:
