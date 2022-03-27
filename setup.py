@@ -90,7 +90,7 @@ ext = cythonize([
 
 setup(
     name='mandelia',
-    version="1.0.1",
+    version="1.0.2",
     author="Dashstrom",
     url='https://github.com/Dashstrom/mandelia',
     license="GPL-3.0 License",
