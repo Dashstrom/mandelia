@@ -7,7 +7,6 @@ from typing import List
 from sys import stderr
 
 import numpy as np
-import PyInstaller.__main__
 from setuptools import setup, find_packages
 from setuptools.extension import Extension
 from Cython.Build import cythonize
@@ -36,6 +35,9 @@ class EXECommand(BuildExtCommand):
     def run(self):
         """Run command."""
         BuildExtCommand.run(self)
+
+        import PyInstaller.__main__
+
         PyInstaller.__main__.run([
             "--noconfirm",
             "--log-level=DEBUG",
@@ -51,6 +53,8 @@ class CleanCommand(clean):
         shutil.rmtree("dist", ignore_errors=True)
         shutil.rmtree("build", ignore_errors=True)
         for path in glob.glob("mandelia/model/fractale.*.pyd"):
+            os.remove(path)
+        for path in glob.glob("mandelia/model/fractale.*.so"):
             os.remove(path)
 
 
@@ -109,4 +113,5 @@ setup(
         "mandelia": ["view/images/*"],
     },
     install_requires=read("requirements.txt").split(),
+    zip_safe=False
 )
