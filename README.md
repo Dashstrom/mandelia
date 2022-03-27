@@ -3,8 +3,6 @@
 ![Linux](https://svgshare.com/i/Zhy.svg)
 ![Windows](https://svgshare.com/i/ZhY.svg)
 
----
-
 Application to visualize the fractal of mandelbrot and julia.
 
 ## Installation
