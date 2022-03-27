@@ -1,3 +1,2 @@
 include LICENSE
-include *.py
-recursive-include  mandelbrot/view/images
+include mandelia/view/images/*

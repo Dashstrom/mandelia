@@ -41,7 +41,7 @@ class EXECommand(BuildExtCommand):
             "--log-level=DEBUG",
             "--onefile",
             "--clean",
-            "mandelbrot.spec"
+            "mandelia.spec"
         ])
 
 
@@ -50,7 +50,7 @@ class CleanCommand(clean):
         clean.run(self)
         shutil.rmtree("dist", ignore_errors=True)
         shutil.rmtree("build", ignore_errors=True)
-        for path in glob.glob("mandelbrot/model/fractale.*.pyd"):
+        for path in glob.glob("mandelia/model/fractale.*.pyd"):
             os.remove(path)
 
 
@@ -75,7 +75,7 @@ else:
 ext = cythonize([
     Extension(
         "*",
-        ["mandelbrot/model/*.pyx"],
+        ["mandelia/model/*.pyx"],
         libraries=libraries,
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
@@ -89,15 +89,15 @@ ext = cythonize([
 )
 
 setup(
-    name='mandelbrot',
+    name='mandelia',
     version="1.0.1",
     author="Dashstrom",
-    url='https://github.com/Dashstrom/Mandelbrot',
+    url='https://github.com/Dashstrom/mandelia',
     license="GPL-3.0 License",
     packages=find_packages(exclude=('tests', 'docs')),
     long_description=read("README.md"),
     description=('Application to visualize '
-                 'the fractal of mandelbrot and julia.'),
+                 'the fractal of Mandelbrot and julia.'),
     cmdclass={
         'build_ext': BuildExtCommand,
         'exe': EXECommand,
@@ -106,7 +106,7 @@ setup(
     ext_modules=ext,
     platforms=["Linux", "Windows"],
     package_data={
-        "mandelbrot": ["view/images/*"],
+        "mandelia": ["view/images/*"],
     },
     install_requires=read("requirements.txt").split(),
 )

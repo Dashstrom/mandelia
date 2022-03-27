@@ -3,10 +3,10 @@ __pycache__/
 *.py[cod]
 
 # project hidden
-mandelbrot/**/*.c
-mandelbrot/**/*.cpp
-mandelbrot/**/*.html
-mandelbrot/**/*.so
+mandelia/**/*.c
+mandelia/**/*.cpp
+mandelia/**/*.html
+mandelia/**/*.so
 
 # installation package
 *.egg-info/
