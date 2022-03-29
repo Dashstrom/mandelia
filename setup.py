@@ -85,7 +85,7 @@ libraries: list = []
 if sys.platform.startswith("linux"):
     extra_compile_args = extra_link_args = ["-fopenmp"]
 elif sys.platform == "darwin":
-    pass
+    extra_compile_args = extra_link_args = []
 elif sys.platform == "win32":
     extra_compile_args = extra_link_args = ["/openmp"]
 
