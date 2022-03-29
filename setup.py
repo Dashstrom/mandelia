@@ -1,5 +1,6 @@
 import shutil
 import os
+import sys
 import glob
 import re
 import multiprocessing
@@ -80,10 +81,14 @@ include_dirs: list = [np.get_include()]
 library_dirs: list = []
 libraries: list = []
 
-if os.name == "nt":
-    extra_compile_args = extra_link_args = ["/openmp"]
-else:
+
+if sys.platform.startswith("linux"):
     extra_compile_args = extra_link_args = ["-fopenmp"]
+elif sys.platform == "darwin":
+    pass
+elif sys.platform == "win32":
+    extra_compile_args = extra_link_args = ["/openmp"]
+
 
 ext = cythonize([
     Extension(
