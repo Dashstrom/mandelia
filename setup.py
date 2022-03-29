@@ -125,10 +125,16 @@ setup(
         "Operating System :: POSIX :: Linux"
     ],
     ext_modules=ext,
-    platforms=["Linux", "Windows"],
+    platforms=['any'],
     package_data={
-        "mandelia": ["view/images/*"],
+        "mandelia": ["view/images/*", "**/*.pyi", "**/*.pyx"],
     },
+    keywords=["mandelbrot", "julia", "fractale", "tkinter"],
     install_requires=read("requirements.txt").split(),
+    entry_points={
+        'console_scripts': [
+            'mandelia=mandelia.__main__:main',
+        ]
+    },
     zip_safe=False
 )

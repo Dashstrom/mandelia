@@ -1,2 +1,2 @@
-include LICENSE
-include mandelia/view/images/*
+include README.md LICENSE MANIFEST.in setup.py setup.cfg pyproject.toml
+recursive-exclude pyshortcuts *.pyc

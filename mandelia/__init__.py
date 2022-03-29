@@ -20,7 +20,7 @@ __all__ = [
     "FractaleManager"
 ]
 
-__version__ = "1.0.2"
+__version__ = "0.0.3"
 __author__ = "Dashstrom"
 
 from .controller import Controller
