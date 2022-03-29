@@ -117,6 +117,13 @@ setup(
         'exe': EXECommand,
         'clean': CleanCommand
     },
+    classifiers=[
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Operating System :: Microsoft :: Windows :: Windows 10",
+        "Operating System :: POSIX :: Linux"
+    ],
     ext_modules=ext,
     platforms=["Linux", "Windows"],
     package_data={
