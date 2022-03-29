@@ -1,6 +1,7 @@
 import shutil
 import os
 import glob
+import re
 import multiprocessing
 from distutils.command.clean import clean
 from typing import List
@@ -67,6 +68,14 @@ def read(path: str) -> str:
         return ""
 
 
+def version() -> str:
+    match = re.search(r"__version__ = \"(.+)\"", read("mandelia/__init__.py"))
+    if match:
+        return match.group(1)
+    else:
+        return "1.0.0"
+
+
 include_dirs: list = [np.get_include()]
 library_dirs: list = []
 libraries: list = []
@@ -94,11 +103,11 @@ ext = cythonize([
 
 setup(
     name='mandelia',
-    version="1.0.2",
+    version=version(),
     author="Dashstrom",
     url='https://github.com/Dashstrom/mandelia',
     license="GPL-3.0 License",
-    packages=find_packages(exclude=('tests', 'docs')),
+    packages=find_packages(exclude=('tests', 'docs', '.github')),
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     description=('Application to visualize '
