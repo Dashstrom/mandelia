@@ -83,11 +83,14 @@ libraries: list = []
 
 
 if sys.platform.startswith("linux"):
-    extra_compile_args = extra_link_args = ["-fopenmp"]
+    extra_compile_args = ["-fopenmp"]
+    extra_link_args = []
 elif sys.platform == "darwin":
-    extra_compile_args = extra_link_args = ["-fopenmp"]
+    extra_compile_args = ["-fopenmp"]
+    extra_link_args = ["-lomp"]
 elif sys.platform == "win32":
-    extra_compile_args = extra_link_args = ["/openmp"]
+    extra_compile_args = ["/openmp"]
+    extra_link_args = []
 
 
 ext = cythonize([
