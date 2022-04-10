@@ -1,4 +1,4 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, Tuple
 
 from PIL import Image
 
@@ -32,7 +32,7 @@ class FractaleManager:
         self.first.resize(width, height)
         self.second.resize(int(width / RATIO), int(height / RATIO))
 
-    def images(self) -> tuple[Image.Image, Image.Image]:
+    def images(self) -> Tuple[Image.Image, Image.Image]:
         """Return 2 fractals docs."""
         return self.first.image(), self.second.image()
 

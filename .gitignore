@@ -8,6 +8,8 @@ mandelia/**/*.cpp
 mandelia/**/*.html
 mandelia/**/*.so
 
+wheelhouse/
+
 # installation package
 *.egg-info/
 dist/

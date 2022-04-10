@@ -34,6 +34,15 @@ py setup.py exe
 .\dist\Mandelia.exe
 ```
 
+## Build Wheels locally
+
+```sh
+pip install cibuildwheel==2.4.0
+cibuildwheel --platform windows
+cibuildwheel --platform macos
+cibuildwheel --platform linux
+```
+
 ## Preview
 
 ### Main window

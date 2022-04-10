@@ -113,6 +113,7 @@ setup(
     name='mandelia',
     version=version(),
     author="Dashstrom",
+    email="dashstrom.pro@gmail.com",
     url='https://github.com/Dashstrom/mandelia',
     license="GPL-3.0 License",
     packages=find_packages(exclude=('tests', 'docs', '.github')),
