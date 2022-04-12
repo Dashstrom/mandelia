@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Intall Clang with openmp
-      - run: brew install llvm libomp
+        run: brew install llvm libomp
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.4.0
