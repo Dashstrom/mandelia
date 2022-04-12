@@ -77,20 +77,26 @@ def version() -> str:
         return "1.0.0"
 
 
-include_dirs: list = [np.get_include()]
-library_dirs: list = []
-libraries: list = []
+extra_compile_args: List = []
+extra_link_args: List = []
+include_dirs: List = [np.get_include()]
+library_dirs: List = []
+libraries: List = []
 
 
 if sys.platform.startswith("linux"):
-    extra_compile_args = ["-fopenmp"]
-    extra_link_args = []
+    extra_compile_args += ["-fopenmp"]
+    extra_link_args += []
 elif sys.platform == "darwin":
-    extra_compile_args = ["-fopenmp"]
-    extra_link_args = ["-lomp"]
+    os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
+    os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
+    extra_compile_args += ["-w", "-fopenmp", "-stdlib=libc++"]
+    extra_link_args += ["-fopenmp", "-stdlib=libc++"]
+    include_dirs += ["/usr/local/opt/llvm/include"]
+    library_dirs += ["/usr/local/opt/llvm/lib"]
 elif sys.platform == "win32":
-    extra_compile_args = ["/openmp"]
-    extra_link_args = []
+    extra_compile_args += ["/openmp"]
+    extra_link_args += []
 
 
 ext = cythonize([
