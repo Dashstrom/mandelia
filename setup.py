@@ -5,8 +5,6 @@ import glob
 import re
 import multiprocessing
 from distutils.command.clean import clean
-from typing import List
-from sys import stderr
 
 import numpy as np
 from setuptools import setup, find_packages
@@ -26,7 +24,7 @@ class EXECommand(BuildExtCommand):
     """A custom command to build an executable file."""
 
     description = "Build an executable"
-    user_options: List[str] = []
+    user_options = []  # type: list[str]
 
     def finalize_options(self):
         BuildExtCommand.finalize_options(self)
@@ -65,7 +63,7 @@ def read(path: str) -> str:
         with open(path, "r", encoding="utf8") as f:
             return f.read()
     except FileNotFoundError:
-        print(f"warning: No {path!r} found", file=stderr)
+        print(f"warning: No {path!r} found", file=sys.stderr)
         return ""
 
 
@@ -77,17 +75,20 @@ def version() -> str:
         return "1.0.0"
 
 
-extra_compile_args: List = []
-extra_link_args: List = []
-include_dirs: List = [np.get_include()]
-library_dirs: List = []
-libraries: List = []
+extra_compile_args = []  # type: list[str]
+extra_link_args = []  # type: list[str]
+include_dirs = [np.get_include()]  # type: list[str]
+library_dirs = []  # type: list[str]
+libraries = []  # type: list[str]
+numpy_ver = "numpy"
 
 
 if sys.platform.startswith("linux"):
     extra_compile_args += ["-fopenmp"]
     extra_link_args += []
 elif sys.platform == "darwin":
+    if sys.version_info <= (3, 7):
+        numpy_ver = "numpy==1.18.0"
     os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
     os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
     extra_compile_args += ["-w", "-fopenmp", "-stdlib=libc++"]
@@ -115,6 +116,7 @@ ext = cythonize([
     build_dir="build"
 )
 
+
 setup(
     name='mandelia',
     version=version(),
@@ -124,6 +126,7 @@ setup(
     license="GPL-3.0 License",
     packages=find_packages(exclude=('tests', 'docs', '.github')),
     long_description=read("README.md"),
+    python_requires='>3.5.0',
     long_description_content_type="text/markdown",
     description=('Application to visualize '
                  'the fractal of Mandelbrot and julia.'),
@@ -134,10 +137,19 @@ setup(
     },
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "Programming Language :: Cython",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Operating System :: Microsoft :: Windows :: Windows 10",
-        "Operating System :: POSIX :: Linux"
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: MacOS",
+        "Operating System :: OS Independent",
+        "Natural Language :: French"
     ],
     ext_modules=ext,
     platforms=['any'],
@@ -145,7 +157,16 @@ setup(
         "mandelia": ["view/images/*", "**/*.pyi", "**/*.pyx"],
     },
     keywords=["mandelbrot", "julia", "fractale", "tkinter"],
-    install_requires=read("requirements.txt").split(),
+    install_requires=[
+        "wheel",
+        numpy_ver,
+        "Cython",
+        "future",
+        "Pillow",
+        "opencv-python",
+        "PyInstaller",
+        "Cython"
+    ],
     entry_points={
         'console_scripts': [
             'mandelia=mandelia.__main__:main',
