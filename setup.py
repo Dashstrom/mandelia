@@ -77,7 +77,7 @@ if sys.platform == "darwin":
     os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
     os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
     extra_compile_args += ["-w", "-fopenmp", "-stdlib=libc++"]
-    extra_link_args += ["-fopenmp", "-stdlib=libc++", "-lgomp"]
+    extra_link_args += ["-fopenmp", "-stdlib=libc++"]
     include_dirs += ["/usr/local/opt/llvm/include"]
     library_dirs += ["/usr/local/opt/llvm/lib"]
 elif sys.platform == "win32":
@@ -85,7 +85,7 @@ elif sys.platform == "win32":
     extra_link_args += []
 else:  # sys.platform.startswith("linux"):
     extra_compile_args += ["-fopenmp"]
-    extra_link_args += []
+    extra_link_args += ["-lgomp"]
 
 
 ext = cythonize([
