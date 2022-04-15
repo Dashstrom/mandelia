@@ -48,12 +48,8 @@ class EXECommand(BuildExtCommand):
 
 def read(path):
     # type: (str) -> str
-    try:
-        with open(path, "r", encoding="utf8") as f:
-            return f.read()
-    except FileNotFoundError:
-        print("warning: No {!r} found".format(path), file=sys.stderr)
-        return ""
+    with open(path, "rt", encoding="utf8") as f:
+        return f.read().strip()
 
 
 def version():
@@ -70,11 +66,8 @@ extra_link_args = []  # type: list[str]
 include_dirs = [np.get_include()]  # type: list[str]
 library_dirs = []  # type: list[str]
 libraries = []  # type: list[str]
-numpy_ver = "numpy"
 
 if sys.platform == "darwin":
-    if sys.version_info < (3, 8):
-        numpy_ver = "numpy==1.18.0"
     os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
     os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
     extra_compile_args += ["-w", "-fopenmp", "-stdlib=libc++"]
@@ -147,16 +140,7 @@ setup(
         "mandelia": ["view/images/*", "**/*.pyi", "**/*.pyx"],
     },
     keywords=["mandelbrot", "julia", "fractale", "tkinter"],
-    install_requires=[
-        "wheel",
-        numpy_ver,
-        "Cython",
-        "future",
-        "Pillow",
-        "opencv-python",
-        "PyInstaller",
-        "pytest"
-    ],
+    install_requires=read("requirements.txt").split("\n"),
     entry_points={
         'console_scripts': [
             'mandelia=mandelia.__main__:main',
