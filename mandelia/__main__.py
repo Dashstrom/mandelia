@@ -1,9 +1,11 @@
+"""File call when module is called as script."""
 import sys
 
 from .controller.controller import Controller
 
 
 def main():
+    """Run Controller from sys.argv."""
     if len(sys.argv) == 1:
         Controller()
     elif len(sys.argv) == 2:

@@ -1,3 +1,4 @@
+"""View module."""
 from .export import Export
 from .wait import Wait
 from .widget import Labeled, VariableContainer, AdjustableInput

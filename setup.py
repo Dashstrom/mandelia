@@ -1,10 +1,8 @@
-import shutil
+# pylint: disable=import-outside-toplevel
 import os
 import sys
-import glob
 import re
 import multiprocessing
-from distutils.command.clean import clean
 
 import numpy as np
 from setuptools import setup, find_packages
@@ -47,27 +45,18 @@ class EXECommand(BuildExtCommand):
         ])
 
 
-class CleanCommand(clean):
-    def run(self):
-        clean.run(self)
-        shutil.rmtree("dist", ignore_errors=True)
-        shutil.rmtree("build", ignore_errors=True)
-        for path in glob.glob("mandelia/model/fractale.*.pyd"):
-            os.remove(path)
-        for path in glob.glob("mandelia/model/fractale.*.so"):
-            os.remove(path)
-
-
-def read(path: str) -> str:
+def read(path):
+    # type: (str) -> str
     try:
         with open(path, "r", encoding="utf8") as f:
             return f.read()
     except FileNotFoundError:
-        print(f"warning: No {path!r} found", file=sys.stderr)
+        print("warning: No {!r} found".format(path), file=sys.stderr)
         return ""
 
 
-def version() -> str:
+def version():
+    # type: () -> str
     match = re.search(r"__version__ = \"(.+)\"", read("mandelia/__init__.py"))
     if match:
         return match.group(1)
@@ -82,12 +71,8 @@ library_dirs = []  # type: list[str]
 libraries = []  # type: list[str]
 numpy_ver = "numpy"
 
-
-if sys.platform.startswith("linux"):
-    extra_compile_args += ["-fopenmp"]
-    extra_link_args += []
-elif sys.platform == "darwin":
-    if sys.version_info <= (3, 7):
+if sys.platform == "darwin":
+    if sys.version_info < (3, 8):
         numpy_ver = "numpy==1.18.0"
     os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
     os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
@@ -98,12 +83,15 @@ elif sys.platform == "darwin":
 elif sys.platform == "win32":
     extra_compile_args += ["/openmp"]
     extra_link_args += []
+else:  # sys.platform.startswith("linux"):
+    extra_compile_args += ["-fopenmp"]
+    extra_link_args += []
 
 
 ext = cythonize([
     Extension(
-        "*",
-        ["mandelia/model/*.pyx"],
+        "mandelia.model.fractale",
+        ["mandelia/model/fractale.pyx"],
         libraries=libraries,
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
@@ -121,19 +109,18 @@ setup(
     name='mandelia',
     version=version(),
     author="Dashstrom",
-    email="dashstrom.pro@gmail.com",
+    author_email="dashstrom.pro@gmail.com",
     url='https://github.com/Dashstrom/mandelia',
     license="GPL-3.0 License",
     packages=find_packages(exclude=('tests', 'docs', '.github')),
-    long_description=read("README.md"),
-    python_requires='>3.5.0',
-    long_description_content_type="text/markdown",
     description=('Application to visualize '
                  'the fractal of Mandelbrot and julia.'),
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
+    python_requires='>=3.5.0',
     cmdclass={
         'build_ext': BuildExtCommand,
-        'exe': EXECommand,
-        'clean': CleanCommand
+        'exe': EXECommand
     },
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
@@ -152,7 +139,9 @@ setup(
         "Natural Language :: French"
     ],
     ext_modules=ext,
-    platforms=['any'],
+    platforms="any",
+    include_package_data=True,
+    test_suite="tests",
     package_data={
         "mandelia": ["view/images/*", "**/*.pyi", "**/*.pyx"],
     },
@@ -165,7 +154,7 @@ setup(
         "Pillow",
         "opencv-python",
         "PyInstaller",
-        "Cython"
+        "pytest"
     ],
     entry_points={
         'console_scripts': [

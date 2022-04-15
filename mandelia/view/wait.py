@@ -1,3 +1,4 @@
+"""Wait Toplevel widget."""
 from math import ceil
 import tkinter as tk
 from tkinter import ttk
@@ -48,12 +49,12 @@ class Wait(tk.Toplevel):
 
     def set_preview(self, image: Image.Image):
         """Set image to preview."""
-        w, h = image.size
-        ratio_w = w / 200
-        ratio_h = h / 200
+        width, height = image.size
+        ratio_w = width / 200
+        ratio_h = height / 200
         ratio = max(ratio_h, ratio_w)
-        img_w = ceil(w / ratio)
-        img_h = ceil(h / ratio)
+        img_w = ceil(width / ratio)
+        img_h = ceil(height / ratio)
         self.__image = image.resize((img_w, img_h))
         self.__image_tk = ImageTk.PhotoImage(self.__image)
         if self.__index is not None:

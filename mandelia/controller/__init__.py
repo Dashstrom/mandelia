@@ -1,3 +1,4 @@
+"""Controller module."""
 from .controller import Controller
 
 

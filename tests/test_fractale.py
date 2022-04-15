@@ -1,5 +1,5 @@
 from unittest import TestCase
-from mandelia import Mandelbrot, Julia, ModuloColoration
+from mandelia.model import Mandelbrot, Julia, ModuloColoration
 
 
 class TestMandelbrot(TestCase):

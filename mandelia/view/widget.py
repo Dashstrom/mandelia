@@ -1,5 +1,6 @@
-from abc import ABC
+"""Contains reuseable widgets."""
 import tkinter as tk
+from abc import ABC
 from tkinter.constants import LEFT, NW, HORIZONTAL, FALSE, X, SUNKEN
 from typing import Any, Generic, Optional, TypeVar
 

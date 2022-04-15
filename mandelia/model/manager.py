@@ -1,3 +1,4 @@
+"""Manage fractale mandelbrot and julia."""
 from typing import Optional, Callable, Tuple
 
 from PIL import Image
@@ -41,8 +42,8 @@ class FractaleManager:
             metadata: dict,
             handler_progress: Optional[ProgressHandler] = None
     ) -> None:
-        # TODO better type
-        return self.first.drop(metadata, handler_progress)
+        """Run a video from top to actual point."""
+        self.first.drop(metadata, handler_progress)
 
     def swap(self) -> None:
         """Swap first with the second fractal."""
@@ -64,16 +65,20 @@ class FractaleManager:
             self.__julia.set_c_i(i)
 
     def save_size(self):
+        """Return the size of save."""
         return 1 + self.__mandelbrot.bytes_size() + self.__julia.bytes_size()
 
     def save(self, path: str) -> None:
+        """Save state of manager."""
         with open(path, "wb") as file:
             file.write(self.to_bytes())
 
     def to_bytes(self) -> bytes:
-        return (bytes([1 if self.is_mandelbrot_first() else 0])
-                + self.__mandelbrot.to_bytes()
-                + self.__julia.to_bytes())
+        """Convert the state of manager to bytes."""
+        data = b"\x01" if self.is_mandelbrot_first() else b"\x00"
+        data += self.__mandelbrot.to_bytes()
+        data += self.__julia.to_bytes()
+        return data
 
     def load(self, path: str) -> None:
         """Load fractals from path."""
@@ -82,10 +87,12 @@ class FractaleManager:
                 data = file.read(self.save_size() + 1)
         except FileNotFoundError:
             raise FileNotFoundError(
-                f"Le fichier {path!r} n'a pas pu être trouvé") from None
+                "Le fichier {!r} n'a pas pu être trouvé".format(path)
+            ) from None
         self.from_bytes(data)
 
     def from_bytes(self, data: bytes):
+        """Load manager from bytes."""
         if len(data) != self.save_size():
             raise ValueError(
                 "Mauvais type de fichier.\n"
@@ -99,9 +106,9 @@ class FractaleManager:
             julia_data = data[36:]
             self.__julia.from_bytes(julia_data)
             self.__mandelbrot.from_bytes(mandelbrot_data)
-        except Exception as e:
+        except Exception as err:
             self.from_bytes(temp)  # need to return in previous state
-            raise e
+            raise err
 
     def zoom(self, x: int, y: int, power: float) -> None:
         """Zoom in Image."""
@@ -125,16 +132,16 @@ class FractaleManager:
 
     def color(self, r: int, g: int, b: int) -> None:
         """Set RGB color."""
-        c = self.__coloration
-        c.r = r
-        c.g = g
-        c.b = b
+        color = self.__coloration
+        color.r = r
+        color.g = g
+        color.b = b
 
     @property
-    def rgb(self) -> tuple[int, int, int]:
+    def rgb(self) -> Tuple[int, int, int]:
         """Get RGB color."""
-        c = self.__coloration
-        return c.r, c.g, c.b
+        color = self.__coloration
+        return color.r, color.g, color.b
 
     @property
     def real(self) -> float:

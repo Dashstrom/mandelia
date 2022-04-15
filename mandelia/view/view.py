@@ -1,3 +1,4 @@
+"""Contains widgets of the main view."""
 import tkinter as tk
 from tkinter.constants import NW, X, Y, BOTH, TRUE, W, LEFT
 from typing import Optional

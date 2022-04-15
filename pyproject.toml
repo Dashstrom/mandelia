@@ -1,2 +1,12 @@
 [build-system]
-requires = ["setuptools", "wheel", "Cython", "numpy==1.18.0 ; python_version < '3.8' and sys_platform == 'darwin'", "numpy"]
+requires = [
+    "setuptools",
+    "wheel",
+    "Cython",
+    "numpy==1.18.0 ; python_version < '3.8' and sys_platform == 'darwin'",
+    "numpy"
+]
+
+[tool.cibuildwheel]
+skip = ["pp*"]  # Missing some version for numpy
+test-command = "cd {project} && python setup.py test"

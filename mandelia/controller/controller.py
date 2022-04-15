@@ -1,3 +1,4 @@
+"""Controller of every view."""
 from contextlib import contextmanager
 from random import randint
 from tkinter import TclError
@@ -54,7 +55,7 @@ class Controller:
     def __repr__(self) -> str:
         """Represent a Controller."""
         name = self.__class__.__name__
-        return f"<{name} locked_update={self.locked_update}>"
+        return "<{} locked_update={}>".format(name, self.locked_update)
 
     @logger
     def on_swap(self):
@@ -64,11 +65,6 @@ class Controller:
         self.view.set_image(img1)
         self.view.set_2nd_image(img2)
         self.update()
-
-    @logger
-    def _end_export(self, path: str):
-        """Show information about file."""
-        showinfo("Exporter", f"Exportation réussi\n{stat_file(path)}")
 
     @logger
     def on_export(self, data):
@@ -94,12 +90,11 @@ class Controller:
 
         try:
             self.manager.drop(data, handler_progress)
-            self._end_export(path)
+            showinfo("Exporter", "Exportation réussi\n" + stat_file(path))
         except TclError:
             showerror("Opération annulée", "L'opération a été annulée")
         finally:
             self.__wait = None
-        # TODO lock 2 export at the same time
         self.view.update()
 
     def on_motion(self, event):
@@ -164,13 +159,16 @@ class Controller:
         self.zoom(event.x, event.y, 2 if event.delta > 0 else 0.5)
 
     def on_right_click(self, event):
+        """Handle right click."""
         self.zoom(event.x, event.y, 2)
 
     def on_left_click(self, event):
+        """Handle left click."""
         self.zoom(event.x, event.y, 0.5)
 
     @logger
     def zoom(self, x, y, power):
+        """Zoom in actual fractale."""
         self.manager.zoom(x, y, power)
         self.update()
 
@@ -205,9 +203,9 @@ class Controller:
             interaction.positioning.imaginary.var.set(manager.imaginary)
             interaction.positioning.zoom.var.set(manager.pixel_size)
             interaction.iteration.max.var.set(manager.iterations)
-            interaction.iteration.sum.var.set(f"{manager.iter_sum} i")
+            interaction.iteration.sum.var.set("{} i".format(manager.iter_sum))
             interaction.iteration.per_pixel.var.set(
-                f"{manager.iter_pixel:.2f} i/pxl")
+                "{:.2f} i/pxl".format(manager.iter_pixel))
             img = manager.first.image()
             self.view.set_image(img)
 

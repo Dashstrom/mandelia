@@ -1,3 +1,4 @@
+"""Contains Exoprt Toplevel."""
 import tkinter as tk
 from tkinter.constants import NW, X, LEFT, FALSE
 from tkinter.filedialog import asksaveasfilename
@@ -74,9 +75,10 @@ class Export(tk.Toplevel):
         filetypes.insert(0 if fmt == "GIF" else 1, ('GIF', '*.GIF'))
         filetypes.insert(0 if fmt == "MP4" else 2, ('MP4', '*.MP4'))
         filetypes.append(('JPG', '*.JPG *.JPEG *.JPE'))
+        filename = "mandelbrot.{}".format(fmt.lower())
         path = asksaveasfilename(title="Exporter",
                                  filetypes=filetypes,
-                                 initialfile=f"mandelbrot.{fmt.lower()}")
+                                 initialfile=filename)
         if path:
             self.data = {
                 "path": path,

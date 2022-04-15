@@ -1,7 +1,8 @@
 # ![Logo](https://raw.githubusercontent.com/Dashstrom/mandelia/main/docs/images/logo.png) Mandelia
 
-![Linux](https://svgshare.com/i/Zhy.svg)
-![Windows](https://svgshare.com/i/ZhY.svg)
+[![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
+[![macOS](https://svgshare.com/i/ZjP.svg)](https://svgshare.com/i/ZjP.svg)
+[![Windows](https://svgshare.com/i/ZhY.svg)](https://svgshare.com/i/ZhY.svg)
 
 Application to visualize the fractal of mandelbrot and julia.
 
@@ -12,18 +13,13 @@ pip install mandelia
 python -m mandelia
 ```
 
-## Build from source
-
-### Linux
+## Get Latest from Github
 
 ```sh
-git clone https://github.com/Dashstrom/mandelia.git
-cd mandelia
-pip install .
-python3 -m mandelia
+pip install git+https://github.com/Dashstrom/mandelia
 ```
 
-### Windows
+## Standalone for Windows
 
 Before trying to build, you need to install [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
 

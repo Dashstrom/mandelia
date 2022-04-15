@@ -1,9 +1,7 @@
 wheel
 numpy==1.18.0 ; python_version < '3.8' and sys_platform == 'darwin'
-numpy
 Cython
 future
 Pillow
 opencv-python
 PyInstaller
-Cython
