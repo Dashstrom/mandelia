@@ -1,4 +1,5 @@
 # pylint: disable=import-outside-toplevel
+print("Run setup.py [inside]")
 import os
 import sys
 import re
