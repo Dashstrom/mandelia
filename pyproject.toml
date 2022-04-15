@@ -7,6 +7,14 @@ requires = [
     "numpy"
 ]
 
-[tool.cibuildwheel]
+[tool.cibuildwheel.linux]
 skip = ["pp*"]  # Missing some version for numpy
 test-command = "cd {project} && python setup.py test"
+
+[tool.cibuildwheel.macos]
+skip = ["pp*"]  # Missing some version for numpy
+test-command = "cd {project} && python setup.py test"
+
+[tool.cibuildwheel.windows]
+skip = ["pp*"]  # Missing some version for numpy
+test-command = "tree /F {project} && cd {project} && python setup.py test"

@@ -77,7 +77,7 @@ if sys.platform == "darwin":
     os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
     os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
     extra_compile_args += ["-w", "-fopenmp", "-stdlib=libc++"]
-    extra_link_args += ["-fopenmp", "-stdlib=libc++"]
+    extra_link_args += ["-fopenmp", "-stdlib=libc++", "-lgomp"]
     include_dirs += ["/usr/local/opt/llvm/include"]
     library_dirs += ["/usr/local/opt/llvm/lib"]
 elif sys.platform == "win32":
