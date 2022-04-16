@@ -15,7 +15,7 @@ requires = [
 [tool.cibuildwheel]
 skip = [
     "pp*",  # Missing some version for numpy
-    "*-manylinux_i686"  # No support for opencv
+    "*-manylinux_i686", "*-musllinux_x86_64" # No support for opencv
 ]
 
 
