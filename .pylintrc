@@ -87,7 +87,8 @@ disable=raw-checker-failed,
         deprecated-pragma,
         use-symbolic-message-instead,
         import-error,
-        non-parent-init-called
+        non-parent-init-called,
+        no-name-in-module
 
 
 # Enable the message, report, category or checker with the given id(s). You can
