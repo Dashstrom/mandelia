@@ -54,16 +54,19 @@ ignore_missing_imports = true
 [tool.cibuildwheel]
 skip = [
     "pp*",  # Missing some version for numpy
+    "*-manylinux_x86_64",  # Skip temporary
 ]
 
 [tool.cibuildwheel.linux]
 test-command = "cd {project} && python setup.py test"
 before-all = [
-  "yum install -y libjpeg-devel",
-  "git clone --recursive https://github.com/orbisvicis/opencv-python.git",
-  "cd opencv-python",
-  "git checkout 96cffde198e5bc3411a9577b97021ce59477f97a",
-  "pip install ."
+    "yum install -y libjpeg-devel"
+]
+
+[[tool.cibuildwheel.linux]]
+select = "*-manylinux_i686"
+test-requires = [
+    "git+https://github.com/orbisvicis/opencv-python.git@96cffde198e5bc3411a9577b97021ce59477f97a"
 ]
 
 [tool.cibuildwheel.macos]
