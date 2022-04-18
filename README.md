@@ -6,7 +6,7 @@
 
 Application to visualize the fractal of mandelbrot and julia.
 
-## Installation from Pypi
+## Installation from PyPI
 
 ```sh
 pip install mandelia

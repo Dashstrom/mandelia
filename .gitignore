@@ -11,6 +11,7 @@ mandelia/**/*.so
 wheelhouse/
 
 # installation package
+.eggs
 *.egg-info/
 dist/
 build/
