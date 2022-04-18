@@ -63,7 +63,7 @@ before-all = [
     "yum install -y libjpeg-devel"
 ]
 
-[[tool.cibuildwheel.linux]]
+[[tool.cibuildwheel.overrides]]
 select = "*-manylinux_i686"
 test-requires = [
     "git+https://github.com/orbisvicis/opencv-python.git@96cffde198e5bc3411a9577b97021ce59477f97a"
