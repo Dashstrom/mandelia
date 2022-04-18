@@ -56,11 +56,10 @@ skip = [
     "pp*",  # Missing some version for numpy
 ]
 
-
 [tool.cibuildwheel.linux]
 test-command = "cd {project} && python setup.py test"
 before-all = [
-  "apt-get install libjpeg-dev zlib1g-dev",
+  "apt install libjpeg-dev zlib1g-dev",
 ]
 
 [tool.cibuildwheel.macos]
