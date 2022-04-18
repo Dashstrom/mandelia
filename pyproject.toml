@@ -57,7 +57,7 @@ skip = [
 ]
 
 
-[tool.cibuildwheel.linux][tool.cibuildwheel.linux]
+[tool.cibuildwheel.linux]
 test-command = "cd {project} && python setup.py test"
 before-all = [
   "apt-get install libjpeg-dev zlib1g-dev",
