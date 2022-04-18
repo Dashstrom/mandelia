@@ -88,7 +88,9 @@ disable=raw-checker-failed,
         use-symbolic-message-instead,
         import-error,
         non-parent-init-called,
-        no-name-in-module
+        no-name-in-module,
+        # Not use event parameters
+        unused-argument
 
 
 # Enable the message, report, category or checker with the given id(s). You can

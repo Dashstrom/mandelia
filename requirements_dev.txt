@@ -12,7 +12,8 @@ Pillow
 opencv-python
 PyInstaller
 flake8
-mypy
 pylint
 twine
-codecov
+mypy
+types-Pillow
+types-setuptools

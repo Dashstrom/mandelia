@@ -110,7 +110,7 @@ setup(
                  'the fractal of Mandelbrot and julia.'),
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
-    python_requires='>=3.5.0',
+    python_requires='>=3.6.0',
     cmdclass={
         'build_ext': BuildExtCommand,
         'exe': EXECommand
@@ -136,7 +136,7 @@ setup(
     include_package_data=True,
     test_suite="tests",
     package_data={
-        "mandelia": ["view/images/*", "**/*.pyi", "**/*.pyx"],
+        "mandelia": ["view/images/*", "**/*.pyi", "**/*.pyx", "py.typed"],
     },
     keywords=["mandelbrot", "julia", "fractale", "tkinter"],
     install_requires=read("requirements.txt").split("\n"),

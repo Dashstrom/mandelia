@@ -12,15 +12,56 @@ requires = [
     "numpy"
 ]
 
+[tool.mypy]
+plugins = "numpy.typing.mypy_plugin"
+python_version = 3.6
+
+# Disallow dynamic typing
+disallow_any_unimported = true
+disallow_any_expr = true
+disallow_any_decorated = true
+disallow_any_generics = true
+disallow_any_explicit = true
+disallow_subclassing_any = true
+
+# Disallow untyped definitions and calls
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+
+# None and optional handling
+no_implicit_optional = true
+
+# Configuring warnings
+warn_unused_ignores = true
+warn_no_return = true
+warn_return_any = true
+warn_redundant_casts = true
+
+# Misc things
+strict_equality = true
+
+# Config file
+warn_unused_configs = true
+
+exclude = [ 'setup.py' ]
+
+[tool.mypy-Cython]
+ignore_missing_imports = true
+
 [tool.cibuildwheel]
 skip = [
     "pp*",  # Missing some version for numpy
-    "*-manylinux_i686", "*-musllinux_x86_64", "*-musllinux_i686" # No support for opencv
 ]
 
 
-[tool.cibuildwheel.linux]
+[tool.cibuildwheel.linux][tool.cibuildwheel.linux]
 test-command = "cd {project} && python setup.py test"
+before-all = [
+  "apt-get install libjpeg-dev zlib1g-dev",
+]
 
 [tool.cibuildwheel.macos]
 test-command = "cd {project} && python setup.py test"
