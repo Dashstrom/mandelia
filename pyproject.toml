@@ -59,7 +59,11 @@ skip = [
 [tool.cibuildwheel.linux]
 test-command = "cd {project} && python setup.py test"
 before-all = [
-  "yum install -y libjpeg-devel",
+  "yum install -y libjpeg-turbo-devel",
+  "git clone --recursive https://github.com/orbisvicis/opencv-python.git",
+  "cd opencv-python",
+  "git checkout 96cffde198e5bc3411a9577b97021ce59477f97a",
+  "pip install ."
 ]
 
 [tool.cibuildwheel.macos]
