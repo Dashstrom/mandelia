@@ -1,10 +1,14 @@
 """Controller of every view."""
+import tkinter as tk
 from contextlib import contextmanager
 from random import randint
-from tkinter import TclError
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from tkinter.messagebox import showerror, showinfo
 from traceback import print_exc
+from typing import Optional, Generator
+from PIL import Image
+
+from mandelia.view.export import DataExport
 
 from ..model.manager import FractaleManager
 from ..view.view import View
@@ -15,14 +19,14 @@ from ..util import logger, stat_file
 class Controller:
     """General controller."""
 
-    def __init__(self, path: str = None) -> None:
+    def __init__(self, path: Optional[str] = None) -> None:
         """Instantiate Controller."""
         with self.lock_update():
             view = self.view = View()
             view.update()
             self.manager = FractaleManager(view.width, view.height)
             self.__ignore_update = False
-            self.__wait = None
+            self.__wait: Optional[Wait] = None
 
             interaction = view.interaction
             interaction.action.actualization.config(
@@ -32,8 +36,9 @@ class Controller:
             interaction.file.save.config(command=self.on_save)
             interaction.file.load.config(command=self.on_load)
             interaction.bind_export(self.on_export)
-            interaction.iteration.max.var.trace(
-                "w", lambda *_: self.on_iteration_max())
+            interaction.iteration.max.var.trace_add(
+                "write", self.on_iteration_max
+            )
 
             view.visualization.bind("<MouseWheel>", self.on_wheel)
             view.visualization.bind("<Button-4>", self.on_right_click)
@@ -41,13 +46,12 @@ class Controller:
 
             view.visualization.bind("<Configure>", self.on_resize)
             view.visualization.bind('<Motion>', self.on_motion)
-            view.visualization.bind('<Double-1>', lambda *_: self.on_swap())
-            view.red.trace("w", lambda *_: self.on_color())
-            view.green.trace("w", lambda *_: self.on_color())
-            view.blue.trace("w", lambda *_: self.on_color())
+            view.visualization.bind('<Double-1>', self.on_swap)
+            view.red.trace_add("write", lambda *_: self.on_color())
+            view.green.trace_add("write", lambda *_: self.on_color())
+            view.blue.trace_add("write", lambda *_: self.on_color())
         if path is not None:
-            if not self.load_configuration(path):
-                self.update()
+            self.load_configuration(path)
         else:
             self.update()
         self.view.mainloop()
@@ -58,7 +62,8 @@ class Controller:
         return "<{} locked_update={}>".format(name, self.locked_update)
 
     @logger
-    def on_swap(self):
+    def on_swap(self, event):
+        # type: (tk.Event[tk.Canvas]) -> None
         """Handle swap between julia and mandelbrot."""
         self.manager.swap()
         img1, img2 = self.manager.images()
@@ -67,63 +72,65 @@ class Controller:
         self.update()
 
     @logger
-    def on_export(self, data):
+    def on_export(self, data: DataExport) -> None:
         """Handle export."""
         if self.__wait is not None:
             showerror("Opération en cours",
                       "Un export est déjà en cours, "
                       "veuillez la fermer pour exporter de nouveau")
             return
-        path: str = data["path"]
-        ext = data["ext"] = path.lower().rsplit(".", 1)[-1]
+        path = data["path"]
+        ext = data["ext"]
         if ext in ("gif", "mp4"):
             wait = self.__wait = Wait(self.view)
 
-            def handler_progress(progress, image):
+            def handler_progress(progress: float, image: Image.Image) -> None:
                 wait.progress(progress)
                 wait.set_preview(image)
                 if progress == 1:
                     wait.done()
                 self.view.update()
         else:
-            handler_progress = None
+            def handler_progress(progress: float, image: Image.Image) -> None:
+                pass
 
         try:
             self.manager.drop(data, handler_progress)
             showinfo("Exporter", "Exportation réussi\n" + stat_file(path))
-        except TclError:
+        except tk.TclError:
             showerror("Opération annulée", "L'opération a été annulée")
         finally:
             self.__wait = None
         self.view.update()
 
     def on_motion(self, event):
+        # type: (tk.Event[tk.Canvas]) -> None
         """Handle mouse movement."""
         self.manager.motion(event.x, event.y)
         if self.manager.is_mandelbrot_first():
             img = self.manager.second.image()
             self.view.set_2nd_image(img)
 
-    def load_configuration(self, path):
+    def load_configuration(self, path: str) -> None:
         """Load configuration with displayable error."""
         self.manager.load(path)
         self.update()
         self.update_colors()
 
     @contextmanager
-    def lock_update(self):
+    def lock_update(self) -> Generator[None, None, None]:
         """Context manager for lock update for a short while."""
         self.__ignore_update = True
         yield
         self.__ignore_update = False
 
     @property
-    def locked_update(self):
+    def locked_update(self) -> bool:
         """Return if update is locked."""
         return self.__ignore_update
 
     @logger
-    def on_load(self):
+    def on_load(self) -> None:
         """Handle load of configuration."""
         path = askopenfilename(
             title="Charger la configuration",
@@ -134,7 +141,7 @@ class Controller:
             self.load_configuration(path)
 
     @logger
-    def on_save(self):
+    def on_save(self) -> None:
         """Handle save of configuration."""
         path = asksaveasfilename(
             title="Enregistrer la configuration",
@@ -155,43 +162,47 @@ class Controller:
                 print_exc()
 
     def on_wheel(self, event):
+        # type: (tk.Event[tk.Canvas]) -> None
         """Handle wheel bearing for zoom."""
         self.zoom(event.x, event.y, 2 if event.delta > 0 else 0.5)
 
     def on_right_click(self, event):
+        # type: (tk.Event[tk.Canvas]) -> None
         """Handle right click."""
         self.zoom(event.x, event.y, 2)
 
     def on_left_click(self, event):
+        # type: (tk.Event[tk.Canvas]) -> None
         """Handle left click."""
         self.zoom(event.x, event.y, 0.5)
 
     @logger
-    def zoom(self, x, y, power):
+    def zoom(self, x: int, y: int, power: float) -> None:
         """Zoom in actual fractale."""
         self.manager.zoom(x, y, power)
         self.update()
 
     @logger
-    def on_iteration_max(self):
+    def on_iteration_max(self, name: str, index: str, mode: str) -> None:
         """Handle change of max iterations."""
-        self.manager.iterations = self.view.interaction.iteration.max.var.get()
+        iterations = int(self.view.interaction.iteration.max.var.get())
+        self.manager.iterations = iterations
 
     @logger
-    def on_color(self):
+    def on_color(self) -> None:
         """Handle color changes."""
         if self.locked_update:
             return
         self.manager.color(
-            self.view.red.get(),
-            self.view.green.get(),
-            self.view.blue.get()
+            int(self.view.red.get()),
+            int(self.view.green.get()),
+            int(self.view.blue.get())
         )
         self.update_colors()
         self.update()
 
     @logger
-    def update(self):
+    def update(self) -> None:
         """Update images."""
         if self.locked_update:
             return
@@ -199,9 +210,9 @@ class Controller:
         view = self.view
         with self.lock_update():
             interaction = view.interaction
-            interaction.positioning.real.var.set(manager.real)
-            interaction.positioning.imaginary.var.set(manager.imaginary)
-            interaction.positioning.zoom.var.set(manager.pixel_size)
+            interaction.positioning.real.var.set(str(manager.real))
+            interaction.positioning.imaginary.var.set(str(manager.imaginary))
+            interaction.positioning.zoom.var.set(str(manager.pixel_size))
             interaction.iteration.max.var.set(manager.iterations)
             interaction.iteration.sum.var.set("{} i".format(manager.iter_sum))
             interaction.iteration.per_pixel.var.set(
@@ -228,20 +239,21 @@ class Controller:
             self.view.set_2nd_image(self.manager.second.image())
 
     @logger
-    def on_resize(self, event) -> None:
+    def on_resize(self, event):
+        # type: (tk.Event[tk.Canvas]) -> None
         """Handle window resize."""
         self.manager.resize(event.width, event.height)
         self.view.set_2nd_image(self.manager.second.image())
         self.update()
 
     @logger
-    def on_actualization(self):
+    def on_actualization(self) -> None:
         """Handle actualization button."""
         self.manager.resize(self.view.width, self.view.height)
         self.update()
 
     @logger
-    def on_reset(self):
+    def on_reset(self) -> None:
         """Handle reset button."""
         self.manager.reset()
         self.view.set_2nd_image(self.manager.second.image())

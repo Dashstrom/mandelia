@@ -2,7 +2,7 @@
 import tkinter as tk
 from abc import ABC
 from tkinter.constants import LEFT, NW, HORIZONTAL, FALSE, X, SUNKEN
-from typing import Any, Generic, Optional, TypeVar
+from typing import Generic, Optional, TypeVar
 
 T = TypeVar("T", tk.StringVar, tk.IntVar, tk.DoubleVar, tk.BooleanVar)
 
@@ -47,12 +47,13 @@ class AdjustableInput(Labeled, VariableContainer[tk.DoubleVar]):
                               textvariable=self.entry_var)
         self.scale.pack(side=LEFT, fill=X, expand=True)
         self.entry.pack(side=LEFT, padx=3)
-        self.entry_var.trace("w", self.on_update_scale)
-        self.var.trace("w", self.on_update_entry)
+        self.entry_var.trace_add("write", self.on_update_scale)
+        self.var.trace_add("write", self.on_update_entry)
         self.entry.bind("<FocusOut>", self._event_focus_out)
         self.entry.bind("<KeyPress>", self.on_keypress)
 
-    def on_keypress(self, event) -> None:
+    def on_keypress(self, event):
+        # type: (tk.Event[tk.Entry]) -> None
         """Handle keypress"""
         delta = {"Down": -1, "Up": 1}.get(event.keysym, 0)
         if delta:
@@ -78,12 +79,12 @@ class AdjustableInput(Labeled, VariableContainer[tk.DoubleVar]):
         return self.__error
 
     @error.setter
-    def error(self, state: Any) -> None:
+    def error(self, state: bool) -> None:
         """Set error on true or false."""
         self.__error = bool(state)
         self.entry.configure(bg="red" if self.__error else "white")
 
-    def on_update_scale(self, *_: Any) -> None:
+    def on_update_scale(self, name: str, index: str, mode: str) -> None:
         """Called for update the scale."""
         text = self.entry_var.get()
         self.error = False
@@ -102,15 +103,16 @@ class AdjustableInput(Labeled, VariableContainer[tk.DoubleVar]):
                 self.error = True
             elif self.max < value:
                 self.entry_var.set(str(self.max))
-                self.scale.set(self.max)
+                self.scale.set(self.max)  # type: ignore
             else:
-                self.scale.set(value)
+                self.scale.set(value)  # type: ignore
 
-    def on_update_entry(self, *_: Any) -> None:
+    def on_update_entry(self, name: str, index: str, mode: str) -> None:
         """Called for update the entry."""
         self.entry_var.set(str(int(self.var.get())))
 
-    def _event_focus_out(self, *_: Any) -> None:
+    def _event_focus_out(self, event):
+        # type: (tk.Event[tk.Entry]) -> None
         """Return to the previous valid state."""
         if self.error:
             try:
@@ -119,17 +121,17 @@ class AdjustableInput(Labeled, VariableContainer[tk.DoubleVar]):
                 min_chars = max(len(str(self.min)), 1)
                 nb_chars = len(self.entry_var.get())
                 if nb_chars < min_chars:
-                    self.scale.set(str(self.min))
-            self.on_update_entry(self)
+                    self.scale.set(str(self.min))  # type: ignore
+            self.on_update_entry(name="", index="", mode="")
 
 
 class Output(Labeled, VariableContainer[tk.StringVar]):
     """Read-Only Entry."""
     def __init__(self, master: Optional[tk.Misc],
-                 text: str, default: Any) -> None:
+                 text: str, default: str) -> None:
         """Instantiate Output."""
         Labeled.__init__(self, master, text)
-        VariableContainer.__init__(self, tk.StringVar(self, str(default)))
+        VariableContainer.__init__(self, tk.StringVar(self, default))
         self.sep = tk.Label(self, text=":")
         self.output_label = tk.Label(self, relief=SUNKEN, anchor=NW,
                                      textvariable=self.var, width=25)
@@ -139,10 +141,12 @@ class Output(Labeled, VariableContainer[tk.StringVar]):
 
 class InputOutput(Labeled, VariableContainer[tk.StringVar]):
     """Writable Entry."""
-    def __init__(self, master: Optional[tk.Misc], text, default: Any) -> None:
+    def __init__(
+        self, master: Optional[tk.Misc], text: str, default: str
+    ) -> None:
         """Instantiate InputOutput."""
         Labeled.__init__(self, master, text)
-        VariableContainer.__init__(self, tk.StringVar(self, str(default)))
+        VariableContainer.__init__(self, tk.StringVar(self, default))
         self.sep = tk.Label(self, text=":")
         self.entry = tk.Entry(self, textvariable=self.var, width=32)
         self.sep.pack(side=LEFT)

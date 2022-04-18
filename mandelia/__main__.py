@@ -4,7 +4,7 @@ import sys
 from .controller.controller import Controller
 
 
-def main():
+def main() -> None:
     """Run Controller from sys.argv."""
     if len(sys.argv) == 1:
         Controller()

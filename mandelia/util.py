@@ -4,33 +4,43 @@ import sys
 
 from datetime import datetime
 from functools import wraps
-from typing import Union
-
+from typing import Callable, TypeVar, Union, Optional
 import tkinter as tk
+
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
+
+
+T = TypeVar('T')
+P = ParamSpec('P')
 
 
 def rel_path(relative_path: str) -> str:
     """Get path as relative path, pyinstaller compatible."""
-    if hasattr(sys, '_MEIPASS'):
-        dir_path = os.path.join(getattr(sys, "_MEIPASS"), "mandelia")
-    elif getattr(sys, 'frozen', False):
+    meipass: Optional[str] = getattr(sys, "_MEIPASS", None)
+    frozen: bool = getattr(sys, 'frozen', False)
+    if meipass is not None:
+        dir_path = os.path.join(meipass, "mandelia")
+    elif frozen:
         dir_path = os.path.dirname(sys.executable)
     else:
         dir_path = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(dir_path, relative_path)
 
 
-def logger(func):
+def logger(function: Callable[P, T]) -> Callable[P, T]:
     """Log function by displaying arguments."""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        name = func.__qualname__
-        str_args = ", ".join(repr(arg) for arg in args)
-        str_kwargs = ",".join("{}={!r}".format(k, arg)
-                              for k, arg in kwargs.items())
+    @wraps(function)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        name = function.__qualname__
+        str_args = ", ".join(repr(arg) for arg in args)  # type: ignore
+        str_kwargs = ",".join("{}={!r}".format(k, arg)  # type: ignore
+                              for k, arg in kwargs.items())  # type: ignore
         str_params = ",".join(part for part in (str_args, str_kwargs) if part)
         print("[{}] {}({})".format(datetime.now(), name, str_params))
-        return func(*args, **kwargs)
+        return function(*args, **kwargs)
     return wrapper
 
 

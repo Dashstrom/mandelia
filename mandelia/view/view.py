@@ -1,13 +1,16 @@
 """Contains widgets of the main view."""
 import tkinter as tk
 from tkinter.constants import NW, X, Y, BOTH, TRUE, W, LEFT
-from typing import Optional
+from typing import Callable, Optional
 
 from PIL import Image, ImageTk
 
-from .export import Export
+from .export import DataExport, Export
 from .widget import AdjustableInput, Output
 from ..util import set_icon
+
+
+_CallableExport = Callable[[DataExport], None]
 
 
 class StateInteraction(tk.LabelFrame):
@@ -62,8 +65,8 @@ class IterationInteraction(tk.LabelFrame):
         super().__init__(master, text="Iterations", labelanchor=NW)
 
         self.max = AdjustableInput(self, "Max", 100, 2_000, 10_000)
-        self.sum = Output(self, "Total", 0)
-        self.per_pixel = Output(self, "Par pixel", 0)
+        self.sum = Output(self, "Total", "0")
+        self.per_pixel = Output(self, "Par pixel", "0")
 
         self.max.pack(anchor=W, fill=X)
         self.sum.pack(anchor=W, fill=X)
@@ -76,9 +79,9 @@ class PositioningInteraction(tk.LabelFrame):
         """Instantiate PositioningInteraction."""
         super().__init__(master, text="Positionnement", labelanchor=NW)
 
-        self.zoom = Output(self, text="Zoom", default=1)
-        self.real = Output(self, text="Re", default=0)
-        self.imaginary = Output(self, text="Im", default=0)
+        self.zoom = Output(self, "Zoom", "1")
+        self.real = Output(self, "Re", "0")
+        self.imaginary = Output(self, "Im", "0")
 
         self.zoom.pack(anchor=W, fill=X)
         self.real.pack(anchor=W, fill=X)
@@ -90,7 +93,7 @@ class MainInteraction(tk.Frame):
     def __init__(self, master: Optional[tk.Misc]) -> None:
         """Instantiate MainInteraction."""
         super().__init__(master)
-        self._export_callback = None
+        self._export_callback: Optional[_CallableExport] = None
         self.action = StateInteraction(self)
         self.file = FileInteraction(self)
         self.color = ColorInteraction(self)
@@ -105,14 +108,14 @@ class MainInteraction(tk.Frame):
 
         self.file.export.configure(command=self.open_export)
 
-    def bind_export(self, func):
+    def bind_export(self, callback: Optional[_CallableExport]) -> None:
         """Set function to call on export."""
-        self._export_callback = func
+        self._export_callback = callback
 
-    def open_export(self):
+    def open_export(self) -> None:
         """Ask for export."""
         export = Export(self)
-        if export.data and hasattr(self, "_export_callback"):
+        if export.data and self._export_callback:
             self._export_callback(export.data)
 
 
@@ -141,7 +144,7 @@ class View(tk.Tk):
         self.interaction.pack(side=LEFT, fill=Y)
         self.visualization.pack(fill=BOTH, expand=TRUE)
 
-    def set_image(self, image: Image.Image):
+    def set_image(self, image: Image.Image) -> None:
         """Set the main image."""
         self.__image = image
         self.__image_tk = ImageTk.PhotoImage(self.__image)
@@ -152,7 +155,7 @@ class View(tk.Tk):
         self.visualization.tag_lower(self.__index)
         self.update_idletasks()
 
-    def set_2nd_image(self, image: Image.Image):
+    def set_2nd_image(self, image: Image.Image) -> None:
         """Set the second image."""
         self.__image2 = image
         self.__image_tk2 = ImageTk.PhotoImage(self.__image2)
@@ -164,26 +167,26 @@ class View(tk.Tk):
         self.update_idletasks()
 
     @property
-    def width(self):
+    def width(self) -> int:
         """Get width of visualization canvas."""
         return self.visualization.winfo_width()
 
     @property
-    def height(self):
+    def height(self) -> int:
         """Get height of visualization canvas."""
         return self.visualization.winfo_height()
 
     @property
-    def red(self):
+    def red(self) -> tk.DoubleVar:
         """Get red color variable."""
         return self.interaction.color.red.var
 
     @property
-    def green(self):
+    def green(self) -> tk.DoubleVar:
         """Get green color variable."""
         return self.interaction.color.green.var
 
     @property
-    def blue(self):
+    def blue(self) -> tk.DoubleVar:
         """Get blue color variable."""
         return self.interaction.color.blue.var

@@ -2,9 +2,10 @@
 import tkinter as tk
 from tkinter.constants import NW, X, LEFT, FALSE
 from tkinter.filedialog import asksaveasfilename
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from .widget import AdjustableInput
+from ..model import DataExport
 from ..util import set_icon
 
 
@@ -19,7 +20,7 @@ class Export(tk.Toplevel):
         self.configure()
         self.geometry("300x300")
         set_icon(self)
-        self.data: Dict[str, Any] = {}
+        self.data: Optional[DataExport] = None
         self.format = tk.LabelFrame(self, text="Format", labelanchor=NW)
         values = ['PNG', 'GIF', 'MP4']
         self.format_var = tk.StringVar(self, values[0])
@@ -37,7 +38,10 @@ class Export(tk.Toplevel):
         self.speed = AdjustableInput(self.details, "Vitesse", 5, 10, 50)
         self.button = tk.Button(self, text="Terminer", command=self.terminate)
 
-        self.format_var.trace("w", lambda *_: self.on_disable_useless())
+        self.format_var.trace_add(
+            mode="write",
+            callback=lambda name, index, mode: self.on_disable_useless()
+        )
         self.on_disable_useless()
 
         self.format.pack(padx=5, pady=5, ipady=3, fill=X)
@@ -56,7 +60,7 @@ class Export(tk.Toplevel):
 
         self.take_control()
 
-    def on_disable_useless(self):
+    def on_disable_useless(self) -> None:
         """Disable settings incompatible with actual extension."""
         fmt = self.format_var.get()
         if fmt == "PNG":
@@ -68,7 +72,7 @@ class Export(tk.Toplevel):
             self.fps.enable()
             self.compression.disable()
 
-    def terminate(self):
+    def terminate(self) -> None:
         """End of export."""
         fmt = self.format_var.get()
         filetypes = [('PNG', '*.PNG *.PNS')]
@@ -86,12 +90,13 @@ class Export(tk.Toplevel):
                 "height": int(self.height.var.get()),
                 "compression": int(self.compression.var.get()),
                 "fps": int(self.fps.var.get()),
-                "speed": int(self.speed.var.get())
+                "speed": int(self.speed.var.get()),
+                "ext": path.lower().rsplit(".", 1)[-1]
             }
             self.destroy()
 
-    def take_control(self):
+    def take_control(self) -> None:
         """Take control on main window."""
-        self.transient(self.root)
+        self.wm_transient()
         self.grab_set()
-        self.root.wait_window(self)
+        self.master.wait_window(self)

@@ -42,12 +42,12 @@ class Wait(tk.Toplevel):
 
         # self.take_control()
 
-    def done(self):
+    def done(self) -> None:
         """Alias for destroy."""
         self.destroy()
         self.update()
 
-    def set_preview(self, image: Image.Image):
+    def set_preview(self, image: Image.Image) -> None:
         """Set image to preview."""
         width, height = image.size
         ratio_w = width / 200

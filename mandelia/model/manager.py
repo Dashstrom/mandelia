@@ -1,4 +1,5 @@
 """Manage fractale mandelbrot and julia."""
+import sys
 from typing import Optional, Callable, Tuple
 
 from PIL import Image
@@ -9,6 +10,24 @@ from .fractale import (
     Fractale,
     ModuloColoration
 )
+
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
+
+
+class DataExport(TypedDict):
+    """Represent a metadata of media export."""
+    path: str
+    ext: str
+    width: int
+    height: int
+    compression: int
+    fps: int
+    speed: int
+
 
 RATIO = 3
 ProgressHandler = Callable[[float, Image.Image], None]
@@ -39,11 +58,11 @@ class FractaleManager:
 
     def drop(
             self,
-            metadata: dict,
+            data: DataExport,
             handler_progress: Optional[ProgressHandler] = None
     ) -> None:
         """Run a video from top to actual point."""
-        self.first.drop(metadata, handler_progress)
+        self.first.drop(data, handler_progress)
 
     def swap(self) -> None:
         """Swap first with the second fractal."""
@@ -64,7 +83,7 @@ class FractaleManager:
             self.__julia.set_c_r(r)
             self.__julia.set_c_i(i)
 
-    def save_size(self):
+    def save_size(self) -> int:
         """Return the size of save."""
         return 1 + self.__mandelbrot.bytes_size() + self.__julia.bytes_size()
 
@@ -91,7 +110,7 @@ class FractaleManager:
             ) from None
         self.from_bytes(data)
 
-    def from_bytes(self, data: bytes):
+    def from_bytes(self, data: bytes) -> None:
         """Load manager from bytes."""
         if len(data) != self.save_size():
             raise ValueError(
@@ -115,7 +134,7 @@ class FractaleManager:
         self.first.zoom(x, y, power)
 
     @property
-    def pixel_size(self):
+    def pixel_size(self) -> float:
         """Get pixel size."""
         return self.first.pixel_size
 

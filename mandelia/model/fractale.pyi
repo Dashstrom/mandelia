@@ -1,6 +1,11 @@
 # pylint: disable=unused-argument, disable=super-init-not-called, no-self-use
+from typing import Optional
 import numpy as np
+import numpy.typing as npt
 from PIL import Image
+from mandelia.model.manager import ProgressHandler
+
+from mandelia.view.export import DataExport
 
 
 class ModuloColoration:
@@ -20,7 +25,9 @@ class ModuloColoration:
     def bytes_size(self) -> int:
         ...
 
-    def colorize(self, np_fractale: np.ndarray) -> np.ndarray:
+    def colorize(
+        self, np_fractale: npt.NDArray[np.uint32]
+    ) -> npt.NDArray[np.uint8]:
         ...
 
 
@@ -35,7 +42,7 @@ class Fractale:
 
     def __init__(self, color: ModuloColoration, real: float = 0,
                  imaginary: float = 0, iterations: int = 1_000,
-                 width: int = 128, height: int = 128, pixel_size=0.02
+                 width: int = 128, height: int = 128, pixel_size: float = 0.02
                  ) -> None:
         ...
 
@@ -51,7 +58,7 @@ class Fractale:
     def set_real(self, real: float) -> None:
         ...
 
-    def set_imaginary(self, imaginary: float):
+    def set_imaginary(self, imaginary: float) -> None:
         ...
 
     def set_iterations(self, iterations: int) -> None:
@@ -99,7 +106,11 @@ class Fractale:
     def bytes_size(self) -> int:
         ...
 
-    def drop(self, metadata, handler_progress=None) -> None:
+    def drop(
+        self,
+        data: DataExport,
+        handler_progress: Optional[ProgressHandler] = None
+    ) -> None:
         ...
 
 
@@ -109,7 +120,7 @@ class Julia(Fractale):
 
     def __init__(self, color: ModuloColoration, real: float = 0,
                  imaginary: float = 0, iterations: int = 1_000,
-                 width: int = 128, height: int = 128, pixel_size=0.02
+                 width: int = 128, height: int = 128, pixel_size: float = 0.02
                  ) -> None:
         ...
 
