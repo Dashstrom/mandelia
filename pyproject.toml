@@ -54,7 +54,7 @@ ignore_missing_imports = true
 [tool.cibuildwheel]
 skip = [
     "pp*",  # Missing some version for numpy
-    "*-manylinux_x86_64",  # Skip temporary
+    "*-manylinux_x86_64", "*win*", "*macos*", "*36*",  # Skip temporary
 ]
 
 [tool.cibuildwheel.linux]
@@ -64,7 +64,7 @@ before-all = [
 ]
 
 [[tool.cibuildwheel.overrides]]
-select = "*manylinux_i686"
+select = "cp36-manylinux_i686"
 before-test = "pip install git+https://github.com/orbisvicis/opencv-python.git@96cffde198e5bc3411a9577b97021ce59477f97a"
 
 [tool.cibuildwheel.macos]
