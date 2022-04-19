@@ -65,7 +65,7 @@ before-all = [
 
 [[tool.cibuildwheel.overrides]]
 select = "*manylinux_i686"
-before-test = "pip intall git+https://github.com/orbisvicis/opencv-python.git@96cffde198e5bc3411a9577b97021ce59477f97a"
+before-test = "pip install git+https://github.com/orbisvicis/opencv-python.git@96cffde198e5bc3411a9577b97021ce59477f97a"
 
 [tool.cibuildwheel.macos]
 test-command = "cd {project} && python setup.py test"
