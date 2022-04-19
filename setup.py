@@ -11,6 +11,9 @@ from Cython.Build import cythonize
 from Cython.Distutils import build_ext
 
 
+print("[INFO] {} {}".format(sys.version_info, sys.platform))
+
+
 class BuildExtCommand(build_ext):
 
     def initialize_options(self):
