@@ -54,12 +54,15 @@ ignore_missing_imports = true
 [tool.cibuildwheel]
 skip = [
     "pp*",  # Missing some version for numpy
-    "*-manylinux_x86_64", "*win*", "*macos*", # Skip temporary
+    "*manylinux_x86_64", "*win*", "*macos*", "*manylinux_i686" # Skip temporary
     "cp310-manylinux_i686"  # Not supported (no available numpy)
 ]
 
 [tool.cibuildwheel.linux]
 test-command = "cd {project} && python setup.py test"
+
+[[tool.cibuildwheel.overrides]]
+select = "*manylinux*"
 before-all = [
     "yum install -y libjpeg-devel"
 ]
