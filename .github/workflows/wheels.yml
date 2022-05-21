@@ -15,7 +15,7 @@ jobs:
         
       - uses: actions/upload-artifact@v2
         with:
-          path: dist/*.whl
+          path: ./wheelhouse/*.whl
 
   build_wheels_on_windows:
     name: Build wheels on windows-2019
@@ -29,14 +29,14 @@ jobs:
         
       - uses: actions/upload-artifact@v2
         with:
-          path: dist/*.whl
+          path: ./wheelhouse/*.whl
 
   build_wheels_on_macos:
     name: Build wheels on macos-10.15
     runs-on: macos-10.15
     steps:
       - uses: actions/checkout@v2
-      - name: Intall Clang with openmp
+      - name: Install Clang with openmp
         run: brew install llvm libomp
 
       - name: Build wheels
@@ -44,7 +44,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          path: dist/*.whl
+          path: ./wheelhouse/*.whl
 
   build_sdist:
     name: Build SDist
