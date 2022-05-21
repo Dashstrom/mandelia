@@ -9,5 +9,6 @@ numpy
 Cython
 future
 Pillow
+opencv_python==4.5.1.48; sys_platform == 'linux' and platform_machine == 'i686'
 opencv-python
 PyInstaller
