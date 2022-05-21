@@ -15,7 +15,7 @@ jobs:
         
       - uses: actions/upload-artifact@v2
         with:
-          path: ./wheelhouse/*.whl
+          path: dist/*.whl
 
   build_wheels_on_windows:
     name: Build wheels on windows-2019
@@ -29,7 +29,7 @@ jobs:
         
       - uses: actions/upload-artifact@v2
         with:
-          path: ./wheelhouse/*.whl
+          path: dist/*.whl
 
   build_wheels_on_macos:
     name: Build wheels on macos-10.15
@@ -44,4 +44,20 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          path: ./wheelhouse/*.whl
+          path: dist/*.whl
+
+  build_sdist:
+    name: Build SDist
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Optional, use if you use setuptools_scm
+        submodules: true  # Optional, use if you have submodules
+
+    - name: Build SDist
+      run: pipx run build --sdist
+
+    - uses: actions/upload-artifact@v2
+      with:
+        path: dist/*.tar.gz

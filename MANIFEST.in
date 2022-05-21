@@ -1,4 +1,4 @@
 include tests/*.py mandelia/*.pyx include mandelia/*.py mandelia/*.pyi
 include requirements.txt requirements_dev.txt cli.py .pylintrc .gitignore 
-include mandelia.spec py.typed
+include mandelia.spec mandelia/py.typed
 graft docs/*
