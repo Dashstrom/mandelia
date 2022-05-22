@@ -1,6 +1,8 @@
 name: Build and publish
 
-on: [push, pull_request]
+on:
+  - push
+  - pull_request
 
 jobs:
 
@@ -55,6 +57,11 @@ jobs:
         fetch-depth: 0  # Optional, use if you use setuptools_scm
         submodules: true  # Optional, use if you have submodules
 
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
     - name: Build SDist
       run: pipx run build --sdist
 
@@ -70,7 +77,7 @@ jobs:
       - build_wheels_on_macos
       - build_sdist
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.action == 'published'
+    if: ${{ github.event_name == 'release' && github.event.action == 'created' }}
     steps:
       - uses: actions/download-artifact@v2
         with:
