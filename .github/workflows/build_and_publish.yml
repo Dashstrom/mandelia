@@ -1,45 +1,25 @@
 name: Build and publish
 
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  release:
+    types: [published]
 
 jobs:
 
-  build_wheels_on_ubuntu:
-    name: Build wheels on ubuntu-20.04
-    runs-on: ubuntu-20.04
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macOS-10.15]
     steps:
       - uses: actions/checkout@v2
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.4.0
-        
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
-
-  build_wheels_on_windows:
-    name: Build wheels on windows-2019
-    runs-on: windows-2019
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.4.0
-        
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
-
-  build_wheels_on_macos:
-    name: Build wheels on macos-10.15
-    runs-on: macos-10.15
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install Clang with openmp
-        run: brew install llvm libomp
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.4.0
@@ -49,26 +29,21 @@ jobs:
           path: ./wheelhouse/*.whl
 
   build_sdist:
-    name: Build SDist
+    name: Build sdist
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
         fetch-depth: 0  # Optional, use if you use setuptools_scm
-        submodules: true  # Optional, use if you have submodules
+        submodules: true  # Optional, use if you have submodulesé"''
 
-    - name: Dump GitHub context
-      env:
-        GITHUB_CONTEXT: ${{ toJson(github) }}
-      run: echo "$GITHUB_CONTEXT"
-
-    - name: Build SDist
+    - name: Build sdist
       run: pipx run build --sdist
 
     - uses: actions/upload-artifact@v2
       with:
         path: dist/*.tar.gz
-  
+
   publish_on_pypi:
     name: Publish on PyPI
     needs:
@@ -77,7 +52,7 @@ jobs:
       - build_wheels_on_macos
       - build_sdist
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'release' && github.event.action == 'created' }}
+    if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
     steps:
       - uses: actions/download-artifact@v2
         with:
