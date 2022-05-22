@@ -47,9 +47,7 @@ jobs:
   publish_on_pypi:
     name: Publish on PyPI
     needs:
-      - build_wheels_on_ubuntu
-      - build_wheels_on_windows
-      - build_wheels_on_macos
+      - build_wheels
       - build_sdist
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
