@@ -46,8 +46,6 @@ strict_equality = true
 # Config file
 warn_unused_configs = true
 
-exclude = [ 'setup.py' ]
-
 [tool.mypy-Cython]
 ignore_missing_imports = true
 

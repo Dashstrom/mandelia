@@ -1,4 +1,5 @@
 # pylint: disable=import-outside-toplevel
+# type: ignore
 import os
 import sys
 import re
@@ -9,9 +10,6 @@ from setuptools import setup, find_packages
 from setuptools.extension import Extension
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
-
-
-print("[INFO] {} {}".format(sys.version_info, sys.platform))
 
 
 class BuildExtCommand(build_ext):
@@ -42,7 +40,6 @@ class EXECommand(BuildExtCommand):
         PyInstaller.__main__.run([
             "--noconfirm",
             "--log-level=DEBUG",
-            "--onefile",
             "--clean",
             "mandelia.spec"
         ])
@@ -59,8 +56,7 @@ def version():
     match = re.search(r"__version__ = \"(.+)\"", read("mandelia/__init__.py"))
     if match:
         return match.group(1)
-    else:
-        return "1.0.0"
+    return "0.0.1"
 
 
 extra_compile_args = []  # type: list[str]
@@ -109,8 +105,7 @@ setup(
     url='https://github.com/Dashstrom/mandelia',
     license="GPL-3.0 License",
     packages=find_packages(exclude=('tests', 'docs', '.github')),
-    description=('Application to visualize '
-                 'the fractal of Mandelbrot and julia.'),
+    description="Application to visualize fractals of mandelbrot and julia.",
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     python_requires='>=3.6.0',
@@ -122,7 +117,6 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Programming Language :: Cython",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
