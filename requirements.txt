@@ -11,4 +11,4 @@ Pillow
 opencv_python==4.5.1.48; sys_platform == 'linux' and platform_machine == 'i686'
 opencv-python==4.5.5.64; sys_platform != 'linux' or platform_machine != 'i686'
 PyInstaller
-typing-extensions; python_version>='3.10'
+typing-extensions; python_version<'3.10'
