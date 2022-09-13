@@ -1,7 +1,6 @@
 # pylint: disable=import-outside-toplevel
 # type: ignore
 import multiprocessing
-import os
 import re
 import sys
 

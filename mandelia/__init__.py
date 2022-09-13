@@ -11,10 +11,5 @@ __version__ = "0.0.4"
 __author__ = "Dashstrom"
 
 
-from .model import (
-    ModuloColoration,
-    Fractale,
-    Julia,
-    Mandelbrot,
-    FractaleManager
-)
+from .model import (Fractale, FractaleManager, Julia, Mandelbrot,
+                    ModuloColoration)

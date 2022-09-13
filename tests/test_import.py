@@ -12,4 +12,4 @@ class TestImport(TestCase):
         else:
             from typing_extensions import ParamSpec  # noqa: F401
         if not callable(ParamSpec):  # type: ignore
-            self.fail("INvalid ParamSpec")
+            self.fail("Invalid ParamSpec")

@@ -2,18 +2,17 @@
 import tkinter as tk
 from contextlib import contextmanager
 from random import randint
-from tkinter.filedialog import asksaveasfilename, askopenfilename
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 from tkinter.messagebox import showerror, showinfo
 from traceback import print_exc
-from typing import Optional, Generator
+from typing import Generator, Optional
+
 from PIL import Image
 
-from mandelia.view.export import DataExport
-
-from ..model.manager import FractaleManager
+from ..model.manager import DataExport, FractaleManager
+from ..util import logger, stat_file
 from ..view.view import View
 from ..view.wait import Wait
-from ..util import logger, stat_file
 
 
 class Controller:
@@ -59,7 +58,7 @@ class Controller:
     def __repr__(self) -> str:
         """Represent a Controller."""
         name = self.__class__.__name__
-        return "<{} locked_update={}>".format(name, self.locked_update)
+        return f"<{name} locked_update={self.locked_update}>"
 
     @logger
     def on_swap(self, event):
@@ -214,9 +213,9 @@ class Controller:
             interaction.positioning.imaginary.var.set(str(manager.imaginary))
             interaction.positioning.zoom.var.set(str(manager.pixel_size))
             interaction.iteration.max.var.set(manager.iterations)
-            interaction.iteration.sum.var.set("{} i".format(manager.iter_sum))
+            interaction.iteration.sum.var.set(f"{manager.iter_sum} i")
             interaction.iteration.per_pixel.var.set(
-                "{:.2f} i/pxl".format(manager.iter_pixel))
+                f"{manager.iter_pixel:.2f} i/pxl")
             img = manager.first.image()
             self.view.set_image(img)
 

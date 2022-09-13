@@ -1,12 +1,11 @@
 # pylint: disable=unused-argument, disable=super-init-not-called, no-self-use
 from typing import Optional
+
 import numpy as np
 import numpy.typing as npt
 from PIL import Image
-from mandelia.model.manager import ProgressHandler
 
-from mandelia.view.export import DataExport
-
+from ..model.manager import DataExport, ProgressHandler
 
 class ModuloColoration:
     r: int

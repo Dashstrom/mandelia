@@ -1,14 +1,14 @@
 """Contains widgets of the main view."""
 import tkinter as tk
-from tkinter.constants import NW, X, Y, BOTH, TRUE, W, LEFT
+from tkinter.constants import BOTH, LEFT, NW, TRUE, W, X, Y
 from typing import Callable, Optional
 
 from PIL import Image, ImageTk
 
-from .export import DataExport, Export
-from .widget import AdjustableInput, Output
+from ..model.manager import DataExport
 from ..util import set_icon
-
+from .export import Export
+from .widget import AdjustableInput, Output
 
 _CallableExport = Callable[[DataExport], None]
 

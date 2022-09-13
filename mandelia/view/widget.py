@@ -1,7 +1,7 @@
 """Contains reuseable widgets."""
 import tkinter as tk
 from abc import ABC
-from tkinter.constants import LEFT, NW, HORIZONTAL, FALSE, X, SUNKEN
+from tkinter.constants import FALSE, HORIZONTAL, LEFT, NW, SUNKEN, X
 from typing import Generic, Optional, TypeVar
 
 T = TypeVar("T", tk.StringVar, tk.IntVar, tk.DoubleVar, tk.BooleanVar)

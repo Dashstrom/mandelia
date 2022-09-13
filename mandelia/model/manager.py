@@ -1,16 +1,10 @@
 """Manage fractale mandelbrot and julia."""
 import sys
-from typing import Optional, Callable, Tuple
+from typing import Callable, Optional, Tuple
 
 from PIL import Image
 
-from .fractale import (
-    Mandelbrot,
-    Julia,
-    Fractale,
-    ModuloColoration
-)
-
+from .fractale import Fractale, Julia, Mandelbrot, ModuloColoration
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict
@@ -106,7 +100,7 @@ class FractaleManager:
                 data = file.read(self.save_size() + 1)
         except FileNotFoundError:
             raise FileNotFoundError(
-                "Le fichier {!r} n'a pas pu être trouvé".format(path)
+                f"Le fichier {path!r} n'a pas pu être trouvé".format()
             ) from None
         self.from_bytes(data)
 

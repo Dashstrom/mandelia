@@ -1,8 +1,8 @@
 """Wait Toplevel widget."""
-from math import ceil
 import tkinter as tk
+from math import ceil
 from tkinter import ttk
-from tkinter.constants import NW, X, HORIZONTAL, BOTTOM
+from tkinter.constants import BOTTOM, HORIZONTAL, NW, X
 from typing import Optional
 
 from PIL import Image, ImageTk

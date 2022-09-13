@@ -1,6 +1,7 @@
 """Unit tests for mandelia.model."""
 from unittest import TestCase
-from mandelia.model import Mandelbrot, Julia, ModuloColoration
+
+from mandelia.model import Julia, Mandelbrot, ModuloColoration
 
 
 class TestMandelbrot(TestCase):
