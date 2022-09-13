@@ -1,6 +1,6 @@
 # ![Logo](https://raw.githubusercontent.com/Dashstrom/mandelia/main/docs/images/logo.png) Mandelia
 
-![Build result](https://github.com/Dashstrom/mandelia/actions/workflows/build_and_publish.yml/badge.svg)
+[![Build result](https://github.com/Dashstrom/mandelia/actions/workflows/build_and_publish.yml/badge.svg)](https://github.com/Dashstrom/mandelia/actions/workflows/build_and_publish.yml)
 [![PyPI version](https://badge.fury.io/py/mandelia.svg)](https://badge.fury.io/py/mandelia)
 
 [![Linux](https://svgshare.com/i/Zhy.svg)](https://svgshare.com/i/Zhy.svg)
@@ -30,8 +30,9 @@ python3 -m mandelia
 ```sh
 git clone https://github.com/Dashstrom/mandelia.git
 pip3 install -r requirements_dev.txt
-python3 setup.py test
+python3 setup.py build_exe
 python3 -m mandelia
+python3 setup.py test
 ```
 
 ## Standalone for Windows
