@@ -1,15 +1,15 @@
 # pylint: disable=import-outside-toplevel
 # type: ignore
-import os
-import sys
-import re
 import multiprocessing
+import os
+import re
+import sys
 
 import numpy as np
-from setuptools import setup, find_packages
-from setuptools.extension import Extension
 from Cython.Build import cythonize
 from Cython.Distutils import build_ext
+from setuptools import find_packages, setup
+from setuptools.extension import Extension
 
 
 class BuildExtCommand(build_ext):
@@ -66,12 +66,8 @@ library_dirs = []  # type: list[str]
 libraries = []  # type: list[str]
 
 if sys.platform == "darwin":
-    os.environ["CC"] = "/usr/local/opt/llvm/bin/clang"
-    os.environ["CXX"] = "/usr/local/opt/llvm/bin/clang++"
     extra_compile_args += ["-w", "-fopenmp", "-stdlib=libc++"]
     extra_link_args += ["-fopenmp", "-stdlib=libc++"]
-    include_dirs += ["/usr/local/opt/llvm/include"]
-    library_dirs += ["/usr/local/opt/llvm/lib"]
 elif sys.platform == "win32":
     extra_compile_args += ["/openmp"]
     extra_link_args += []
