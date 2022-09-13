@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macOS-10.15]
+        os: [ubuntu-20.04, windows-2019, macOS-12]
     steps:
       - uses: actions/checkout@v2
 
@@ -25,8 +25,8 @@ jobs:
         if: runner.os == 'macOS'
         uses: pypa/cibuildwheel@v2.4.0
         env:
-          CC: clang
-          CXX: clang++
+          CC: /usr/local/opt/llvm/bin/clang
+          CXX: /usr/local/opt/llvm/bin/clang++
 
       - name: Build wheels
         if: runner.os != 'macOS'
